@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import { createVote, listVotes } from '../controllers/voteController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+import { validate } from '../middleware/validationMiddleware.js';
+import { voteSchema, filterSchema } from '../validations/voteValidation.js';
+const router = Router();
+router.post('/', rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: 'draft-8', legacyHeaders: false, message: { success: false, message: 'Too many votes; try again shortly' } }), validate(voteSchema), createVote);
+router.get('/', authMiddleware, validate(filterSchema, 'query'), listVotes);
+export default router;

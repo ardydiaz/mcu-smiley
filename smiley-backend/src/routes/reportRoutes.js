@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { report, exportCsv } from '../controllers/reportController.js';
+import { authMiddleware } from '../middleware/authMiddleware.js';
+import { validate } from '../middleware/validationMiddleware.js';
+import { filterSchema } from '../validations/voteValidation.js';
+const router = Router();
+router.use(authMiddleware);
+router.get('/', validate(filterSchema, 'query'), report);
+router.get('/csv', validate(filterSchema, 'query'), exportCsv);
+export default router;

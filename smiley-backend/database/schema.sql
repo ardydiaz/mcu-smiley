@@ -1,0 +1,3 @@
+-- Project Smiley Face database schema is migration-backed.
+-- Use `npm run db:migrate` or `npm run db:init`.
+-- Current schema: database/migrations/001_create_smiley_schema.sql
