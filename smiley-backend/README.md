@@ -6,7 +6,7 @@ Node.js 22+ / Express 5 / MySQL 8.0+ backend. Uses ES modules and the requested 
 
 1. Run `npm install` in this folder (use `npm.cmd` in PowerShell if execution policy blocks npm).
 2. Copy `.env.example` to `.env` if it does not exist. Set your MySQL connection details and a random JWT_SECRET. Generate a secret with `node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"`. The included local .env starts with an empty secret and must be configured. Never commit .env.
-3. Start MySQL, then run `npm run db:migrate` or `npm run db:init`. This creates the database, the `migrations` tracking table, the Project Smiley Face tables and five rating choices. Existing data is preserved. The setup account needs CREATE privileges; use a restricted runtime database account for deployment.
+3. Start MySQL, then run `npm run db:migrate` or `npm run db:init`. This creates the database, the `migrations` tracking table, the Project Smiley Face tables and four active rating choices. Existing data is preserved. The setup account needs CREATE privileges; use a restricted runtime database account for deployment.
 4. Create an administrator using the environment variables below.
 5. Run `npm run dev` for watch mode or `npm start`. The API listens on http://localhost:5000. Startup checks the database connection.
 
@@ -38,11 +38,26 @@ Swagger UI is available at `http://localhost:<PORT>/api/docs` after the backend 
 | POST | /auth/login | Public, rate limited | Email and password login |
 | GET | /auth/me | Authenticated | Current API account |
 | GET | /ratings | Public | Active smiley choices, highest score first |
+| GET | /user-types | Public | Active voter user types |
 | GET | /departments | Public | Active departments |
 | GET | /departments/all | Admin | All departments including inactive |
 | POST | /departments | Admin | Create department |
 | PUT | /departments/:id | Admin | Replace department fields |
 | DELETE | /departments/:id | Admin | Deactivate department; preserve vote history |
+| GET | /locations | Public | Active kiosk locations |
+| GET | /locations/all | Admin | All locations including inactive |
+| POST | /locations | Admin | Create location |
+| PUT | /locations/:id | Admin | Replace location fields |
+| DELETE | /locations/:id | Admin | Deactivate location; preserve vote history |
+| GET | /terminals | Public | Active terminals, optionally filtered by locationId |
+| GET | /terminals/all | Admin | All terminals including inactive |
+| POST | /terminals | Admin | Create terminal |
+| PUT | /terminals/:id | Admin | Replace terminal fields |
+| DELETE | /terminals/:id | Admin | Deactivate terminal; preserve vote history |
+| GET | /terminal-departments | Admin | List terminal-to-department assignments |
+| POST | /terminal-departments | Admin | Assign a terminal to a department |
+| PUT | /terminal-departments/:id | Admin | Replace an assignment |
+| DELETE | /terminal-departments/:id | Admin | Delete an assignment |
 | POST | /votes | Public, rate limited | Submit a vote |
 | GET | /votes | Admin | Paginated feedback |
 | GET | /dashboard | Admin | Totals, average, satisfaction, rating/department/day breakdowns |
@@ -72,22 +87,42 @@ Authorization: Bearer <token>
 Department POST/PUT body:
 
 ```json
-{ "code": "STUDENT_SERVICES", "name": "Student Services", "description": "Student assistance", "status": "active" }
+{ "name": "Student Services", "description": "Student assistance", "status": "active" }
 ```
 
-Vote body (use IDs returned by the public endpoints):
+Location POST/PUT body:
 
 ```json
-{ "ratingId": 1, "departmentId": 1, "serviceId": 1, "feedback": "Friendly service!" }
+{ "name": "Student Center", "description": "Main kiosk area", "status": "active" }
 ```
 
-Optional `serviceId` must belong to the selected department. Optional `locationId` and `terminalId` can be attached to a vote; when both are present, the terminal must belong to that location. Service, location and terminal models are provided; configure records directly in MySQL or through those models. Dedicated service/location/terminal HTTP routes are outside this structure.
+Terminal POST/PUT body:
 
-Votes require active ratings and departments. Submission uses a transaction and shared locks to prevent status changes during insertion. Free-text feedback is optional and limited to 2,000 characters. No voter personal information is required.
+```json
+{ "locationId": 1, "terminalCode": "TABLET-001", "name": "Student Center Tablet", "status": "active" }
+```
+
+Terminal department POST/PUT body:
+
+```json
+{ "terminalId": 1, "departmentId": 1 }
+```
+
+Use `GET /terminal-departments?terminalId=1` to list departments assigned to a tablet. A terminal can have multiple department assignments, but duplicate terminal/department pairs are blocked.
+
+Vote body:
+
+```json
+{ "ratingId": 1, "userTypeId": 1, "terminalCode": "Tablet-01", "feedback": "Friendly service!" }
+```
+
+The frontend does not ask for department, location, or terminal during the voting flow. For many tablets, open `/kiosk/setup` once on each tablet and select its terminal. The selected terminal code is stored in that tablet browser and submitted with every vote. `VITE_TERMINAL_CODE` is only an optional fallback for a fixed single-tablet build.
+
+Votes require an active rating, active user type, active terminal, active terminal location, at least one active department assignment for the terminal, and non-empty feedback. Submission uses a transaction and shared locks to prevent status changes during insertion. The backend records `terminal_id` and `location_id` from the submitted terminal code, then copies every active department assigned to that terminal into `vote_departments`. Free-text feedback is limited to 2,000 characters. No voter personal information is required.
 
 ## Reports and dashboard
 
-Supported query parameters: `from=YYYY-MM-DD`, `to=YYYY-MM-DD`, `departmentId`, `serviceId`, `locationId`, `terminalId`, `page` (default 1), `limit` (default 25, maximum 100). Dates are inclusive UTC calendar dates. Dashboard aggregates use filters, but ignore pagination. Satisfaction is the percentage of votes with values 4 or 5. Rating and department breakdowns contain groups with matching votes.
+Supported query parameters: `q`, `from=YYYY-MM-DD`, `to=YYYY-MM-DD`, `ratingId`, `departmentId`, `userTypeId`, `locationId`, `terminalId`, `page` (default 1), `limit` (default 25, maximum 100). Dates are inclusive UTC calendar dates. Dashboard aggregates use filters, but ignore pagination. Satisfaction is the percentage of votes with values 4 or 5. Rating and department breakdowns contain groups with matching votes.
 
 CSV exports contain **one page**, matching the JSON report. `X-Total-Count` reports the full matching count; increment page to retrieve additional pages. CSV cells are escaped and spreadsheet formulas neutralized. Render feedback as text in the frontend.
 

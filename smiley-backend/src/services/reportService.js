@@ -8,7 +8,7 @@ export async function getReport(filters) {
   return Vote.list(filters);
 }
 export function toCsv(items) {
-  const rows = [['ID', 'Date (UTC)', 'Rating', 'Score', 'Department', 'Service', 'Location', 'Terminal', 'Feedback']];
-  for (const row of items) rows.push([row.id, row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at, row.rating, row.score, row.department, row.service, row.location, row.terminal, row.feedback]);
+  const rows = [['ID', 'Date (UTC)', 'Rating', 'Score', 'User Type', 'Department', 'Location', 'Terminal Code', 'Tablet Name', 'Feedback']];
+  for (const row of items) rows.push([row.id, row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at, row.rating, row.score, row.user_type, row.department, row.location, row.terminal_code, row.terminal, row.feedback]);
   return rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }

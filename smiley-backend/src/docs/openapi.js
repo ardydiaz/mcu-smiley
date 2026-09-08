@@ -6,13 +6,17 @@ export const openApiDocument = {
     description: 'API documentation for the Smiley Face voting backend.',
   },
   servers: [
-    { url: 'http://localhost:5000/api', description: 'Local backend' },
+    { url: 'http://localhost:3000/api', description: 'Local backend' },
   ],
   tags: [
     { name: 'Health' },
     { name: 'Auth' },
     { name: 'Ratings' },
+    { name: 'User Types' },
     { name: 'Departments' },
+    { name: 'Locations' },
+    { name: 'Terminals' },
+    { name: 'Terminal Departments' },
     { name: 'Votes' },
     { name: 'Dashboard' },
     { name: 'Reports' },
@@ -96,17 +100,27 @@ export const openApiDocument = {
         type: 'object',
         properties: {
           id: { type: 'integer', example: 1 },
-          label: { type: 'string', example: 'Excellent' },
+          label: { type: 'string', example: 'Very Satisfied' },
           emoji: { type: 'string', example: ':smile:' },
           score: { type: 'integer', minimum: 1, maximum: 5, example: 5 },
           status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+        },
+      },
+      UserType: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Student' },
+          status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          active: { type: 'boolean', example: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
         },
       },
       Department: {
         type: 'object',
         properties: {
           id: { type: 'integer', example: 1 },
-          code: { type: 'string', nullable: true, example: 'STUDENT_SERVICES' },
           name: { type: 'string', example: 'Student Services' },
           description: { type: 'string', example: 'Student assistance' },
           status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
@@ -119,23 +133,89 @@ export const openApiDocument = {
         type: 'object',
         required: ['name'],
         properties: {
-          code: { type: 'string', nullable: true, maxLength: 50, example: 'STUDENT_SERVICES' },
           name: { type: 'string', maxLength: 100, example: 'Student Services' },
           description: { type: 'string', maxLength: 500, example: 'Student assistance' },
           active: { type: 'boolean', deprecated: true, example: true },
           status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
         },
       },
+      Location: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          name: { type: 'string', example: 'Student Center' },
+          description: { type: 'string', example: 'Main kiosk area' },
+          status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          active: { type: 'boolean', example: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      LocationRequest: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string', maxLength: 100, example: 'Student Center' },
+          description: { type: 'string', maxLength: 500, example: 'Main kiosk area' },
+          status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+        },
+      },
+      Terminal: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          location_id: { type: 'integer', example: 1 },
+          location_name: { type: 'string', example: 'Main Lobby' },
+          terminal_code: { type: 'string', example: 'KIOSK-1' },
+          name: { type: 'string', example: 'Kiosk 1' },
+          status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          active: { type: 'boolean', example: true },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      TerminalRequest: {
+        type: 'object',
+        required: ['locationId', 'terminalCode', 'name'],
+        properties: {
+          locationId: { type: 'integer', minimum: 1, example: 1 },
+          terminalCode: { type: 'string', maxLength: 50, example: 'KIOSK-1' },
+          name: { type: 'string', maxLength: 100, example: 'Kiosk 1' },
+          status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+        },
+      },
+      TerminalDepartment: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', example: 1 },
+          terminal_id: { type: 'integer', example: 1 },
+          terminal_code: { type: 'string', example: 'TABLET-001' },
+          terminal_name: { type: 'string', example: 'Student Center Tablet' },
+          terminal_status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          department_id: { type: 'integer', example: 1 },
+          department_name: { type: 'string', example: 'Student Affairs and Services' },
+          department_status: { type: 'string', enum: ['active', 'inactive'], example: 'active' },
+          created_at: { type: 'string', format: 'date-time' },
+          updated_at: { type: 'string', format: 'date-time' },
+        },
+      },
+      TerminalDepartmentRequest: {
+        type: 'object',
+        required: ['terminalId', 'departmentId'],
+        properties: {
+          terminalId: { type: 'integer', minimum: 1, example: 1 },
+          departmentId: { type: 'integer', minimum: 1, example: 1 },
+        },
+      },
       VoteRequest: {
         type: 'object',
-        required: ['ratingId', 'departmentId'],
+        description: 'The voter does not choose a department. The frontend sends the configured tablet terminal code, and the backend resolves the terminal, location, and assigned departments.',
+        required: ['ratingId', 'userTypeId', 'terminalCode', 'feedback'],
         properties: {
           ratingId: { type: 'integer', minimum: 1, example: 1 },
-          departmentId: { type: 'integer', minimum: 1, example: 1 },
-          serviceId: { type: 'integer', minimum: 1, example: 1 },
-          locationId: { type: 'integer', minimum: 1, example: 1 },
-          terminalId: { type: 'integer', minimum: 1, example: 1 },
-          feedback: { type: 'string', maxLength: 2000, example: 'Friendly service!' },
+          userTypeId: { type: 'integer', minimum: 1, example: 1 },
+          terminalCode: { type: 'string', minLength: 1, maxLength: 50, description: 'Configured tablet code, for example the LRC tablet code.', example: 'Tablet-01' },
+          feedback: { type: 'string', minLength: 1, maxLength: 2000, example: 'Friendly service!' },
         },
       },
       Vote: {
@@ -144,15 +224,17 @@ export const openApiDocument = {
           id: { type: 'integer', example: 10 },
           feedback: { type: 'string', nullable: true, example: 'Friendly service!' },
           created_at: { type: 'string', format: 'date-time' },
-          service_id: { type: 'integer', nullable: true, example: 1 },
+          user_type_id: { type: 'integer', example: 1 },
           location_id: { type: 'integer', nullable: true, example: 1 },
           terminal_id: { type: 'integer', nullable: true, example: 1 },
-          rating: { type: 'string', example: 'Excellent' },
+          rating: { type: 'string', example: 'Very Satisfied' },
+          rating_emoji: { type: 'string', example: '😄' },
           score: { type: 'integer', example: 5 },
-          department: { type: 'string', example: 'Student Services' },
-          service: { type: 'string', nullable: true, example: 'Enrollment' },
+          user_type: { type: 'string', example: 'Student' },
+          department: { type: 'string', nullable: true, description: 'Department names assigned to the terminal. Multiple departments are comma-separated.', example: 'Career Planning, Student Affairs Services' },
           location: { type: 'string', nullable: true, example: 'Main Lobby' },
-          terminal: { type: 'string', nullable: true, example: 'Kiosk 1' },
+          terminal_code: { type: 'string', nullable: true, example: 'Tablet-03' },
+          terminal: { type: 'string', nullable: true, description: 'Tablet name', example: 'PGT Building' },
         },
       },
       PaginatedVotes: {
@@ -199,13 +281,25 @@ export const openApiDocument = {
         schema: { type: 'string', format: 'date' },
         example: '2026-09-07',
       },
+      SearchQuery: {
+        name: 'q',
+        in: 'query',
+        description: 'Search feedback, rating, user type, department, location, terminal code, or tablet name.',
+        schema: { type: 'string', maxLength: 100 },
+        example: 'PGT',
+      },
+      RatingId: {
+        name: 'ratingId',
+        in: 'query',
+        schema: { type: 'integer', minimum: 1 },
+      },
       DepartmentId: {
         name: 'departmentId',
         in: 'query',
         schema: { type: 'integer', minimum: 1 },
       },
-      ServiceId: {
-        name: 'serviceId',
+      UserTypeId: {
+        name: 'userTypeId',
         in: 'query',
         schema: { type: 'integer', minimum: 1 },
       },
@@ -364,6 +458,27 @@ export const openApiDocument = {
         },
       },
     },
+    '/user-types': {
+      get: {
+        tags: ['User Types'],
+        summary: 'List active voter user types',
+        responses: {
+          200: {
+            description: 'Active user types',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { type: 'object', properties: { data: { type: 'array', items: { $ref: '#/components/schemas/UserType' } } } },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     '/departments': {
       get: {
         tags: ['Departments'],
@@ -446,6 +561,250 @@ export const openApiDocument = {
         },
       },
     },
+    '/locations': {
+      get: {
+        tags: ['Locations'],
+        summary: 'List active locations',
+        responses: {
+          200: {
+            description: 'Active locations',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { type: 'object', properties: { data: { type: 'array', items: { $ref: '#/components/schemas/Location' } } } },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+      post: {
+        tags: ['Locations'],
+        summary: 'Create a location',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/LocationRequest' } } },
+        },
+        responses: {
+          201: { description: 'Location created' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/locations/all': {
+      get: {
+        tags: ['Locations'],
+        summary: 'List all locations including inactive',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: { description: 'All locations' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/locations/{id}': {
+      put: {
+        tags: ['Locations'],
+        summary: 'Update a location',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/LocationRequest' } } },
+        },
+        responses: {
+          200: { description: 'Location updated' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Location not found' },
+        },
+      },
+      delete: {
+        tags: ['Locations'],
+        summary: 'Deactivate a location',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        responses: {
+          200: { description: 'Location deactivated' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Location not found' },
+        },
+      },
+    },
+    '/terminals': {
+      get: {
+        tags: ['Terminals'],
+        summary: 'List active terminals',
+        parameters: [{ $ref: '#/components/parameters/LocationId' }],
+        responses: {
+          200: {
+            description: 'Active terminals',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { type: 'object', properties: { data: { type: 'array', items: { $ref: '#/components/schemas/Terminal' } } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+        },
+      },
+      post: {
+        tags: ['Terminals'],
+        summary: 'Create a terminal',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/TerminalRequest' } } },
+        },
+        responses: {
+          201: { description: 'Terminal created' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          409: { $ref: '#/components/responses/Conflict' },
+        },
+      },
+    },
+    '/terminals/all': {
+      get: {
+        tags: ['Terminals'],
+        summary: 'List all terminals including inactive',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/LocationId' }],
+        responses: {
+          200: { description: 'All terminals' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/terminals/{id}': {
+      put: {
+        tags: ['Terminals'],
+        summary: 'Update a terminal',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/TerminalRequest' } } },
+        },
+        responses: {
+          200: { description: 'Terminal updated' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Terminal not found' },
+          409: { $ref: '#/components/responses/Conflict' },
+        },
+      },
+      delete: {
+        tags: ['Terminals'],
+        summary: 'Deactivate a terminal',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        responses: {
+          200: { description: 'Terminal deactivated' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Terminal not found' },
+        },
+      },
+    },
+    '/terminal-departments': {
+      get: {
+        tags: ['Terminal Departments'],
+        summary: 'List terminal department assignments',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { $ref: '#/components/parameters/TerminalId' },
+          { $ref: '#/components/parameters/DepartmentId' },
+        ],
+        responses: {
+          200: {
+            description: 'Terminal department assignments',
+            content: {
+              'application/json': {
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccess' },
+                    { type: 'object', properties: { data: { type: 'array', items: { $ref: '#/components/schemas/TerminalDepartment' } } } },
+                  ],
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+      post: {
+        tags: ['Terminal Departments'],
+        summary: 'Assign a terminal to a department',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/TerminalDepartmentRequest' } } },
+        },
+        responses: {
+          201: { description: 'Terminal department created' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          409: { $ref: '#/components/responses/Conflict' },
+        },
+      },
+    },
+    '/terminal-departments/{id}': {
+      put: {
+        tags: ['Terminal Departments'],
+        summary: 'Update a terminal department assignment',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        requestBody: {
+          required: true,
+          content: { 'application/json': { schema: { $ref: '#/components/schemas/TerminalDepartmentRequest' } } },
+        },
+        responses: {
+          200: { description: 'Terminal department updated' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Terminal department not found' },
+          409: { $ref: '#/components/responses/Conflict' },
+        },
+      },
+      delete: {
+        tags: ['Terminal Departments'],
+        summary: 'Delete a terminal department assignment',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        responses: {
+          200: { description: 'Terminal department deleted' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Terminal department not found' },
+        },
+      },
+    },
     '/votes': {
       post: {
         tags: ['Votes'],
@@ -464,10 +823,12 @@ export const openApiDocument = {
         summary: 'List votes',
         security: [{ bearerAuth: [] }],
         parameters: [
+          { $ref: '#/components/parameters/SearchQuery' },
           { $ref: '#/components/parameters/FromDate' },
           { $ref: '#/components/parameters/ToDate' },
+          { $ref: '#/components/parameters/RatingId' },
           { $ref: '#/components/parameters/DepartmentId' },
-          { $ref: '#/components/parameters/ServiceId' },
+          { $ref: '#/components/parameters/UserTypeId' },
           { $ref: '#/components/parameters/LocationId' },
           { $ref: '#/components/parameters/TerminalId' },
           { $ref: '#/components/parameters/Page' },
@@ -498,10 +859,12 @@ export const openApiDocument = {
         summary: 'Get dashboard aggregates',
         security: [{ bearerAuth: [] }],
         parameters: [
+          { $ref: '#/components/parameters/SearchQuery' },
           { $ref: '#/components/parameters/FromDate' },
           { $ref: '#/components/parameters/ToDate' },
+          { $ref: '#/components/parameters/RatingId' },
           { $ref: '#/components/parameters/DepartmentId' },
-          { $ref: '#/components/parameters/ServiceId' },
+          { $ref: '#/components/parameters/UserTypeId' },
           { $ref: '#/components/parameters/LocationId' },
           { $ref: '#/components/parameters/TerminalId' },
         ],
@@ -530,10 +893,12 @@ export const openApiDocument = {
         summary: 'Get paginated report data',
         security: [{ bearerAuth: [] }],
         parameters: [
+          { $ref: '#/components/parameters/SearchQuery' },
           { $ref: '#/components/parameters/FromDate' },
           { $ref: '#/components/parameters/ToDate' },
+          { $ref: '#/components/parameters/RatingId' },
           { $ref: '#/components/parameters/DepartmentId' },
-          { $ref: '#/components/parameters/ServiceId' },
+          { $ref: '#/components/parameters/UserTypeId' },
           { $ref: '#/components/parameters/LocationId' },
           { $ref: '#/components/parameters/TerminalId' },
           { $ref: '#/components/parameters/Page' },
@@ -552,10 +917,12 @@ export const openApiDocument = {
         summary: 'Export report data as CSV',
         security: [{ bearerAuth: [] }],
         parameters: [
+          { $ref: '#/components/parameters/SearchQuery' },
           { $ref: '#/components/parameters/FromDate' },
           { $ref: '#/components/parameters/ToDate' },
+          { $ref: '#/components/parameters/RatingId' },
           { $ref: '#/components/parameters/DepartmentId' },
-          { $ref: '#/components/parameters/ServiceId' },
+          { $ref: '#/components/parameters/UserTypeId' },
           { $ref: '#/components/parameters/LocationId' },
           { $ref: '#/components/parameters/TerminalId' },
           { $ref: '#/components/parameters/Page' },

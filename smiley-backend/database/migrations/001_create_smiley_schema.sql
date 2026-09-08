@@ -12,26 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS departments (
   id INT PRIMARY KEY AUTO_INCREMENT,
-  code VARCHAR(50) NULL UNIQUE,
   name VARCHAR(100) NOT NULL UNIQUE,
   description VARCHAR(500) NOT NULL DEFAULT '',
   status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX departments_status (status)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS services (
-  id INT PRIMARY KEY AUTO_INCREMENT,
-  department_id INT NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  description VARCHAR(500) NOT NULL DEFAULT '',
-  status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT services_department_fk FOREIGN KEY (department_id) REFERENCES departments(id),
-  UNIQUE KEY services_department_name_unique (department_id, name),
-  INDEX services_status (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS locations (
@@ -71,30 +57,40 @@ CREATE TABLE IF NOT EXISTS ratings (
 CREATE TABLE IF NOT EXISTS votes (
   id INT PRIMARY KEY AUTO_INCREMENT,
   rating_id INT NOT NULL,
-  department_id INT NOT NULL,
-  service_id INT NULL,
+  department_id INT NULL,
   location_id INT NULL,
   terminal_id INT NULL,
   feedback TEXT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT votes_rating_fk FOREIGN KEY (rating_id) REFERENCES ratings(id),
   CONSTRAINT votes_department_fk FOREIGN KEY (department_id) REFERENCES departments(id),
-  CONSTRAINT votes_service_fk FOREIGN KEY (service_id) REFERENCES services(id),
   CONSTRAINT votes_location_fk FOREIGN KEY (location_id) REFERENCES locations(id),
   CONSTRAINT votes_terminal_fk FOREIGN KEY (terminal_id) REFERENCES terminals(id),
   INDEX votes_created (created_at),
   INDEX votes_department_created (department_id, created_at),
-  INDEX votes_service_created (service_id, created_at),
   INDEX votes_location_created (location_id, created_at),
   INDEX votes_terminal_created (terminal_id, created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS vote_departments (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  vote_id INT NOT NULL,
+  department_id INT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT vote_departments_vote_fk FOREIGN KEY (vote_id) REFERENCES votes(id),
+  CONSTRAINT vote_departments_department_fk FOREIGN KEY (department_id) REFERENCES departments(id),
+  UNIQUE KEY vote_departments_unique (vote_id, department_id),
+  INDEX vote_departments_vote (vote_id),
+  INDEX vote_departments_department (department_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO ratings (emoji, name, value, status) VALUES
-  (CAST(UNHEX('F09F9884') AS CHAR CHARACTER SET utf8mb4), 'Excellent', 5, 'active'),
-  (CAST(UNHEX('F09F9982') AS CHAR CHARACTER SET utf8mb4), 'Good', 4, 'active'),
-  (CAST(UNHEX('F09F9890') AS CHAR CHARACTER SET utf8mb4), 'Okay', 3, 'active'),
-  (CAST(UNHEX('F09F9981') AS CHAR CHARACTER SET utf8mb4), 'Poor', 2, 'active'),
-  (CAST(UNHEX('F09F989E') AS CHAR CHARACTER SET utf8mb4), 'Very poor', 1, 'active')
+  (CAST(UNHEX('F09F9884') AS CHAR CHARACTER SET utf8mb4), 'Very Satisfied', 5, 'active'),
+  (CAST(UNHEX('F09F9982') AS CHAR CHARACTER SET utf8mb4), 'Satisfied', 4, 'active'),
+  (CAST(UNHEX('F09F9890') AS CHAR CHARACTER SET utf8mb4), 'Neutral', 3, 'active'),
+  (CAST(UNHEX('F09F9981') AS CHAR CHARACTER SET utf8mb4), 'Dissatisfied', 2, 'active'),
+  (CAST(UNHEX('F09F989E') AS CHAR CHARACTER SET utf8mb4), 'Very Dissatisfied', 1, 'inactive')
 ON DUPLICATE KEY UPDATE
   emoji = VALUES(emoji),
   name = VALUES(name),
