@@ -4,7 +4,8 @@ export const voteSchema = z.object({
   ratingId: id,
   userTypeId: id,
   terminalCode: z.string().trim().min(1, 'Terminal code is required').max(50),
-  feedback: z.string().trim().min(1, 'Feedback is required').max(2000),
+  feedbackOptionId: id,
+  feedback: z.string().trim().max(2000).default(''),
 }).strict();
 const date = z.iso.date();
 export const filterSchema = z.object({

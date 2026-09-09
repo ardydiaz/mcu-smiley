@@ -24,7 +24,7 @@ export default function SmileyPage() {
   }
 
   return (
-    <section className="kiosk-panel">
+    <section className="kiosk-panel smiley-page">
       <div className="kiosk-heading">
         <span className="kiosk-eyebrow">MCU Service Feedback</span>
         <h1>How was your experience?</h1>

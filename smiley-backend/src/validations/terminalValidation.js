@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
-const id = z.coerce.number().int().positive().max(2147483647);
+const id = z.coerce.number().int('Location is required').positive('Location is required').max(2147483647);
 
 export const terminalSchema = z.object({
   locationId: id,
-  terminalCode: z.string().trim().min(1).max(50),
-  name: z.string().trim().min(1).max(100),
+  terminalCode: z.string().trim().min(1, 'Terminal code is required').max(50, 'Terminal code must be 50 characters or fewer'),
+  name: z.string().trim().min(1, 'Terminal name is required').max(100, 'Terminal name must be 100 characters or fewer'),
   status: z.enum(['active', 'inactive']).default('active'),
 }).strict();
 

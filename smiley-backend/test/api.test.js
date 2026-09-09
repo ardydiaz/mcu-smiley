@@ -15,6 +15,12 @@ const { terminalSchema, terminalQuerySchema } = await import('../src/validations
 const { terminalAssignmentSchema, terminalAssignmentQuerySchema } = await import('../src/validations/terminalAssignmentValidation.js');
 const { voteFilter } = await import('../src/models/Vote.js');
 const { submitVote } = await import('../src/services/voteService.js');
+const { createDepartment, updateDepartment } = await import('../src/controllers/departmentController.js');
+const { Department } = await import('../src/models/Department.js');
+const { createLocation, updateLocation } = await import('../src/controllers/locationController.js');
+const { Location } = await import('../src/models/Location.js');
+const { createTerminal, updateTerminal } = await import('../src/controllers/terminalController.js');
+const { Terminal } = await import('../src/models/Terminal.js');
 const { csvCell, toCsv } = await import('../src/services/reportService.js');
 let server, base;
 before(async () => {
@@ -47,7 +53,7 @@ test('swagger docs and OpenAPI JSON are available', async () => {
   assert.ok(document.components.securitySchemes.bearerAuth);
 });
 test('admin endpoints reject missing or forged credentials', async () => {
-  for (const route of ['/api/auth/me', '/api/votes', '/api/departments/all', '/api/locations/all', '/api/terminals/all', '/api/terminal-departments', '/api/dashboard', '/api/reports', '/api/reports/csv']) {
+  for (const route of ['/api/auth/me', '/api/votes', '/api/departments/all', '/api/locations/all', '/api/terminals/all', '/api/terminal-departments', '/api/feedback-options/all', '/api/dashboard', '/api/reports', '/api/reports/csv']) {
     assert.equal((await fetch(base + route)).status, 401);
     assert.equal((await fetch(base + route, { headers: { authorization: 'Bearer forged' } })).status, 401);
   }
@@ -55,6 +61,7 @@ test('admin endpoints reject missing or forged credentials', async () => {
   assert.equal((await fetch(base + '/api/locations', { method: 'POST' })).status, 401);
   assert.equal((await fetch(base + '/api/terminals', { method: 'POST' })).status, 401);
   assert.equal((await fetch(base + '/api/terminal-departments', { method: 'POST' })).status, 401);
+  assert.equal((await fetch(base + '/api/feedback-options', { method: 'POST' })).status, 401);
 });
 test('valid token loads current administrator and disabled users are rejected', async () => {
   const original = User.findById;
@@ -116,11 +123,12 @@ test('validation bounds IDs, feedback, pagination and date ranges', () => {
   assert.equal(voteSchema.safeParse({ ratingId: 1, feedback: 'Helpful staff' }).success, false);
   assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1 }).success, false);
   assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: '', feedback: 'Helpful staff' }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: '   ' }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'x'.repeat(2001) }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'Helpful staff' }).success, true);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', departmentId: 1, feedback: 'Helpful staff' }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'Helpful staff', admin: true }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'Helpful staff' }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, feedback: 'x'.repeat(2001) }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1 }).success, true);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, feedback: 'Helpful staff' }).success, true);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, departmentId: 1, feedback: 'Helpful staff' }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, feedback: 'Helpful staff', admin: true }).success, false);
   assert.equal(filterSchema.safeParse({ from: '2026-02-30' }).success, false);
   assert.equal(filterSchema.safeParse({ from: '2026-09-02', to: '2026-09-01' }).success, false);
   assert.equal(filterSchema.safeParse({ q: 'PGT', ratingId: '1' }).success, true);
@@ -130,16 +138,143 @@ test('validation bounds IDs, feedback, pagination and date ranges', () => {
   assert.equal(filterSchema.parse({}).limit, 25);
 });
 test('department, location and terminal validation require IDs and names', () => {
-  assert.equal(departmentSchema.safeParse({ name: 'Student Services' }).success, true);
+  assert.equal(departmentSchema.safeParse({ name: 'Student Services', description: 'Student services office' }).success, true);
+  assert.equal(departmentSchema.safeParse({ name: 'Student Services' }).success, false);
   assert.equal(departmentSchema.safeParse({ name: '' }).success, false);
   assert.equal(departmentSchema.safeParse({ name: 'Student Services', code: 'SAS' }).success, false);
-  assert.equal(locationSchema.safeParse({ name: 'Student Center' }).success, true);
+  assert.equal(locationSchema.safeParse({ name: 'Student Center', description: 'Main kiosk area' }).success, true);
+  assert.equal(locationSchema.safeParse({ name: 'Student Center' }).success, false);
   assert.equal(locationSchema.safeParse({ name: '' }).success, false);
   assert.equal(locationSchema.safeParse({ name: 'Student Center', extra: true }).success, false);
   assert.equal(terminalSchema.safeParse({ locationId: 1, terminalCode: 'KIOSK-1', name: 'Kiosk 1' }).success, true);
   assert.equal(terminalSchema.safeParse({ locationId: 1, terminalCode: '', name: 'Kiosk 1' }).success, false);
   assert.equal(terminalQuerySchema.safeParse({ locationId: '1' }).success, true);
 });
+
+test('duplicate department names return field validation errors', async () => {
+  const originalFindDuplicateName = Department.findDuplicateName;
+  const originalFindById = Department.findById;
+  const originalCreate = Department.create;
+  const originalUpdate = Department.update;
+  const responses = [];
+  const res = {
+    status(code) {
+      responses.push({ code });
+      return this;
+    },
+    json(payload) {
+      responses[responses.length - 1].payload = payload;
+      return payload;
+    },
+  };
+
+  try {
+    Department.findDuplicateName = async () => ({ id: 1 });
+    Department.findById = async () => ({ id: 2 });
+    Department.create = async () => { throw new Error('create should not run'); };
+    Department.update = async () => { throw new Error('update should not run'); };
+
+    await createDepartment({ validated: { body: { name: 'SAS', description: 'Student Affairs Services' } } }, res);
+    await updateDepartment({ validated: { params: { id: 2 }, body: { name: 'SAS', description: 'Student Affairs Services' } } }, res);
+
+    assert.deepEqual(responses, [
+      { code: 400, payload: { success: false, message: 'Validation failed', errors: [{ field: 'name', message: 'Department name already exists' }] } },
+      { code: 400, payload: { success: false, message: 'Validation failed', errors: [{ field: 'name', message: 'Department name already exists' }] } },
+    ]);
+  } finally {
+    Department.findDuplicateName = originalFindDuplicateName;
+    Department.findById = originalFindById;
+    Department.create = originalCreate;
+    Department.update = originalUpdate;
+  }
+});
+
+test('duplicate location names return field validation errors', async () => {
+  const originalFindDuplicateName = Location.findDuplicateName;
+  const originalFindById = Location.findById;
+  const originalCreate = Location.create;
+  const originalUpdate = Location.update;
+  const responses = [];
+  const res = {
+    status(code) {
+      responses.push({ code });
+      return this;
+    },
+    json(payload) {
+      responses[responses.length - 1].payload = payload;
+      return payload;
+    },
+  };
+
+  try {
+    Location.findDuplicateName = async () => ({ id: 1 });
+    Location.findById = async () => ({ id: 2 });
+    Location.create = async () => { throw new Error('create should not run'); };
+    Location.update = async () => { throw new Error('update should not run'); };
+
+    await createLocation({ validated: { body: { name: 'LRC Ground Floor', description: 'Main kiosk area' } } }, res);
+    await updateLocation({ validated: { params: { id: 2 }, body: { name: 'LRC Ground Floor', description: 'Main kiosk area' } } }, res);
+
+    assert.deepEqual(responses, [
+      { code: 400, payload: { success: false, message: 'Validation failed', errors: [{ field: 'name', message: 'Location name already exists' }] } },
+      { code: 400, payload: { success: false, message: 'Validation failed', errors: [{ field: 'name', message: 'Location name already exists' }] } },
+    ]);
+  } finally {
+    Location.findDuplicateName = originalFindDuplicateName;
+    Location.findById = originalFindById;
+    Location.create = originalCreate;
+    Location.update = originalUpdate;
+  }
+});
+
+test('duplicate terminal code and name return field validation errors', async () => {
+  const originalFindDuplicateFields = Terminal.findDuplicateFields;
+  const originalFindById = Terminal.findById;
+  const originalCreate = Terminal.create;
+  const originalUpdate = Terminal.update;
+  const responses = [];
+  const res = {
+    status(code) {
+      responses.push({ code });
+      return this;
+    },
+    json(payload) {
+      responses[responses.length - 1].payload = payload;
+      return payload;
+    },
+  };
+
+  try {
+    Terminal.findDuplicateFields = async () => [
+      { terminal_code: 'Tablet-01', name: 'Different name' },
+      { terminal_code: 'Tablet-99', name: 'LRC Ground Floor Table - 01' },
+    ];
+    Terminal.findById = async () => ({ id: 2 });
+    Terminal.create = async () => { throw new Error('create should not run'); };
+    Terminal.update = async () => { throw new Error('update should not run'); };
+
+    const body = { locationId: 1, terminalCode: 'Tablet-01', name: 'LRC Ground Floor Table - 01' };
+    await createTerminal({ validated: { body } }, res);
+    await updateTerminal({ validated: { params: { id: 2 }, body } }, res);
+
+    assert.deepEqual(responses, [
+      { code: 400, payload: { success: false, message: 'Validation failed', errors: [
+        { field: 'terminalCode', message: 'Terminal code already exists' },
+        { field: 'name', message: 'Terminal name already exists' },
+      ] } },
+      { code: 400, payload: { success: false, message: 'Validation failed', errors: [
+        { field: 'terminalCode', message: 'Terminal code already exists' },
+        { field: 'name', message: 'Terminal name already exists' },
+      ] } },
+    ]);
+  } finally {
+    Terminal.findDuplicateFields = originalFindDuplicateFields;
+    Terminal.findById = originalFindById;
+    Terminal.create = originalCreate;
+    Terminal.update = originalUpdate;
+  }
+});
+
 test('terminal department validation requires terminal and department IDs', () => {
   assert.equal(terminalAssignmentSchema.safeParse({ terminalId: 1, departmentId: 1 }).success, true);
   assert.equal(terminalAssignmentSchema.safeParse({ terminalId: 0, departmentId: 1 }).success, false);
@@ -150,7 +285,7 @@ test('terminal department validation requires terminal and department IDs', () =
 });
 test('report filters parameterize input and include the entire end date', () => {
   const filter = voteFilter({ q: 'PGT', from: '2026-09-01', to: '2026-09-07', ratingId: 4, departmentId: 1, userTypeId: 2 });
-  assert.deepEqual(filter.parameters, ['PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', '2026-09-01', '2026-09-07', 4, 1, 1, 2]);
+  assert.deepEqual(filter.parameters, ['PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', 'PGT', '2026-09-01', '2026-09-07', 4, 1, 1, 2]);
   assert.match(filter.where, /DATE_ADD\(\?, INTERVAL 1 DAY\)/);
   assert.ok(!filter.where.includes('2026'));
   assert.ok(!filter.where.includes('PGT'));
@@ -169,6 +304,7 @@ test('vote submission commits valid votes and rolls back unavailable choices', a
     beginTransaction: async () => calls.push('begin'),
     execute: async (sql, params) => {
       if (sql.includes('FROM ratings') || sql.includes('FROM user_types')) return [available ? [{ id: 1 }] : []];
+      if (sql.includes('FROM feedback_options')) return [[{ id: 5, label: 'Timely assistance', requires_text: 0 }]];
       if (sql.includes('FROM terminals')) return [[{ id: 9, location_id: 3 }]];
       if (sql.includes('FROM terminal_departments')) return [[{ department_id: 4 }, { department_id: 7 }]];
       if (sql.startsWith('INSERT INTO votes')) return [{ insertId: 42 }];
@@ -183,11 +319,11 @@ test('vote submission commits valid votes and rolls back unavailable choices', a
     release: () => calls.push('release'),
   });
   try {
-    assert.deepEqual(await submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'Helpful staff' }), { id: 42 });
+    assert.deepEqual(await submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 5, feedback: 'Helpful staff' }), { id: 42 });
     assert.deepEqual(calls, ['begin', 'vote_department:4', 'vote_department:7', 'commit', 'release']);
     calls.length = 0;
     available = false;
-    await assert.rejects(submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'Helpful staff' }), /Rating is unavailable/);
+    await assert.rejects(submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 5, feedback: 'Helpful staff' }), /Rating is unavailable/);
     assert.deepEqual(calls, ['begin', 'rollback', 'release']);
   } finally { pool.getConnection = original; }
 });

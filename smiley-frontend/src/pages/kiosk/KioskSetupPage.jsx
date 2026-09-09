@@ -56,41 +56,43 @@ export default function KioskSetupPage() {
             <CheckCircle2 size={22} aria-hidden="true" />
             <div>
               <strong>Current tablet: {currentTerminal.terminalCode}</strong>
-              <span>{currentTerminal.name}{currentTerminal.locationName ? ' · ' + currentTerminal.locationName : ''}</span>
+              <span>{currentTerminal.name}{currentTerminal.locationName ? ' - ' + currentTerminal.locationName : ''}</span>
             </div>
           </div>
         ) : null}
 
-        <div className="field">
-          <label htmlFor="kiosk-terminal">Terminal</label>
-          <select
-            id="kiosk-terminal"
-            value={selectedCode}
-            onChange={event => setSelectedCode(event.target.value)}
-            disabled={loading}
-          >
-            <option value="">Select terminal</option>
-            {terminals.map(terminal => (
-              <option key={terminal.id} value={terminal.terminal_code}>
-                {terminal.terminal_code} — {terminal.name}{terminal.location_name ? ' · ' + terminal.location_name : ''}
-              </option>
-            ))}
-          </select>
-          <p className="field-hint">This setting is saved only in this tablet browser.</p>
-        </div>
-
-        {selectedTerminal ? (
-          <div className="terminal-preview">
-            <span><Monitor size={18} aria-hidden="true" /> {selectedTerminal.name}</span>
-            <span><MapPin size={18} aria-hidden="true" /> {selectedTerminal.location_name || 'No location name'}</span>
+        <div className={'setup-form-row' + (selectedTerminal ? ' has-preview' : '')}>
+          <div className="field setup-terminal-field">
+            <label htmlFor="kiosk-terminal">Terminal</label>
+            <select
+              id="kiosk-terminal"
+              value={selectedCode}
+              onChange={event => setSelectedCode(event.target.value)}
+              disabled={loading}
+            >
+              <option value="">Select terminal</option>
+              {terminals.map(terminal => (
+                <option key={terminal.id} value={terminal.terminal_code}>
+                  {terminal.terminal_code} - {terminal.name}{terminal.location_name ? ' - ' + terminal.location_name : ''}
+                </option>
+              ))}
+            </select>
+            <p className="field-hint">This setting is saved only in this tablet browser.</p>
           </div>
-        ) : null}
+
+          {selectedTerminal ? (
+            <div className="terminal-preview">
+              <span><Monitor size={18} aria-hidden="true" /> {selectedTerminal.name}</span>
+              <span><MapPin size={18} aria-hidden="true" /> {selectedTerminal.location_name || 'No location name'}</span>
+            </div>
+          ) : null}
+        </div>
 
         {loading ? <Loading label="Loading terminals" /> : null}
         {error ? <div className="empty-state">{error}</div> : null}
         {!loading && !error && !terminals.length ? <div className="empty-state">No active terminals found. Add terminals in Admin first.</div> : null}
 
-        <div className="button-row">
+        <div className="button-row setup-actions">
           <Button type="submit" icon={CheckCircle2} disabled={loading || !selectedTerminal}>Save Tablet</Button>
           <Button type="button" variant="secondary" icon={RefreshCcw} onClick={() => reload().catch(() => {})} disabled={loading}>Refresh</Button>
           {currentTerminal ? <Button type="button" variant="danger" icon={Trash2} onClick={removeSetup}>Clear</Button> : null}

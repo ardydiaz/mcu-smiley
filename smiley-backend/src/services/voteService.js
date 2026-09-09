@@ -1,7 +1,7 @@
 import { pool } from '../config/database.js';
 import { AppError } from '../utils/response.js';
 
-export async function submitVote({ ratingId, userTypeId, terminalCode, feedback }) {
+export async function submitVote({ ratingId, userTypeId, terminalCode, feedbackOptionId, feedback = '' }) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
@@ -10,6 +10,16 @@ export async function submitVote({ ratingId, userTypeId, terminalCode, feedback 
       const [rows] = await connection.execute("SELECT id FROM " + table + " WHERE id = ? AND status = 'active' FOR SHARE", [id]);
       if (!rows.length) throw new AppError(label + ' is unavailable', 400);
     }
+
+    const [feedbackOptionRows] = await connection.execute(
+      "SELECT id, label, requires_text FROM feedback_options WHERE id = ? AND rating_id = ? AND status = 'active' FOR SHARE",
+      [feedbackOptionId, ratingId],
+    );
+    if (!feedbackOptionRows.length) throw new AppError('Feedback option is unavailable for this rating', 400);
+    const feedbackOption = feedbackOptionRows[0];
+    const customFeedback = feedback.trim();
+    if (feedbackOption.requires_text && !customFeedback) throw new AppError('Feedback is required', 400);
+    const finalFeedback = feedbackOption.requires_text ? customFeedback : feedbackOption.label;
 
     const [terminalRows] = await connection.execute(
       "SELECT t.id, t.location_id FROM terminals t JOIN locations l ON l.id = t.location_id WHERE t.terminal_code = ? AND t.status = 'active' AND l.status = 'active' FOR SHARE",
@@ -26,8 +36,8 @@ export async function submitVote({ ratingId, userTypeId, terminalCode, feedback 
     const departmentId = departmentRows.length === 1 ? departmentRows[0].department_id : null;
 
     const [result] = await connection.execute(
-      'INSERT INTO votes (rating_id, user_type_id, department_id, location_id, terminal_id, feedback) VALUES (?, ?, ?, ?, ?, ?)',
-      [ratingId, userTypeId, departmentId, terminal.location_id, terminal.id, feedback],
+      'INSERT INTO votes (rating_id, user_type_id, department_id, location_id, terminal_id, feedback_option_id, feedback) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [ratingId, userTypeId, departmentId, terminal.location_id, terminal.id, feedbackOptionId, finalFeedback],
     );
     for (const department of departmentRows) {
       await connection.execute(

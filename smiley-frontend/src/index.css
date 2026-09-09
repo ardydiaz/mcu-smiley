@@ -32,7 +32,7 @@ a {
   position: relative;
   min-height: 100vh;
   display: grid;
-  overflow: hidden;
+  overflow: auto;
   background: linear-gradient(135deg, #f8fafc 0%, #eef7f4 48%, #fff9ed 100%);
 }
 
@@ -320,6 +320,115 @@ a {
   padding-inline: 0.6rem;
 }
 
+@media (orientation: landscape) and (max-height: 820px) {
+  .kiosk-main {
+    min-height: 100vh;
+    padding: clamp(0.75rem, 2.4vh, 1.5rem) clamp(1rem, 3vw, 2rem);
+    align-content: center;
+  }
+
+  .smiley-page {
+    gap: clamp(1rem, 3vh, 1.75rem);
+  }
+
+  .kiosk-setup-panel {
+    gap: clamp(0.9rem, 2.6vh, 1.4rem);
+  }
+
+  .smiley-page .kiosk-heading,
+  .kiosk-setup-panel .kiosk-heading {
+    gap: clamp(0.35rem, 1.2vh, 0.65rem);
+  }
+
+  .smiley-page .kiosk-eyebrow,
+  .kiosk-setup-panel .kiosk-eyebrow {
+    min-height: 1.75rem;
+    padding: 0.25rem 0.7rem;
+    font-size: clamp(0.68rem, 1.5vh, 0.82rem);
+  }
+
+  .smiley-page .kiosk-heading h1,
+  .kiosk-setup-panel .kiosk-heading h1 {
+    max-width: 1100px;
+    font-size: clamp(2.15rem, 8.4vh, 4.35rem);
+    line-height: 0.94;
+  }
+
+  .smiley-page .kiosk-heading p,
+  .kiosk-setup-panel .kiosk-heading p {
+    font-size: clamp(0.95rem, 2.6vh, 1.18rem);
+  }
+
+  .kiosk-setup-panel .kiosk-heading p {
+    max-width: 760px;
+  }
+
+  .setup-card {
+    width: min(980px, 100%);
+    padding: clamp(1rem, 3vh, 1.45rem);
+    gap: clamp(0.8rem, 2.2vh, 1rem);
+  }
+
+  .setup-form-row.has-preview {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.55fr);
+    align-items: end;
+  }
+
+  .setup-actions {
+    justify-content: flex-end;
+  }
+
+  .smiley-grid {
+    width: min(1180px, 100%);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.75rem, 1.8vw, 1.25rem);
+  }
+
+  .smiley-button {
+    min-height: clamp(8.5rem, 28vh, 12.25rem);
+    aspect-ratio: 1.26;
+  }
+
+  .smiley-emoji {
+    font-size: clamp(4rem, 15vh, 7.2rem);
+  }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+  .smiley-page .kiosk-heading h1,
+  .kiosk-setup-panel .kiosk-heading h1 {
+    font-size: clamp(1.9rem, 8vh, 3rem);
+  }
+
+  .smiley-page .kiosk-heading p,
+  .kiosk-setup-panel .kiosk-heading p {
+    display: none;
+  }
+
+  .setup-current,
+  .terminal-preview {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .setup-card {
+    width: min(920px, 100%);
+  }
+
+  .smiley-grid {
+    width: min(980px, 100%);
+    gap: 0.65rem;
+  }
+
+  .smiley-button {
+    min-height: 6.8rem;
+    border-radius: 10px;
+  }
+
+  .smiley-emoji {
+    font-size: clamp(3.3rem, 16vh, 5rem);
+  }
+}
+
 .department-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
@@ -534,7 +643,7 @@ a {
 }
 
 .setup-card {
-  width: min(760px, 100%);
+  width: min(920px, 100%);
   margin: 0 auto;
   border: 1px solid rgba(23, 32, 42, 0.08);
   border-radius: 18px;
@@ -545,6 +654,15 @@ a {
   display: grid;
   gap: 1.2rem;
   box-shadow: 0 24px 70px rgba(23, 32, 42, 0.12);
+}
+
+.setup-form-row {
+  display: grid;
+  gap: 1rem;
+}
+
+.setup-terminal-field {
+  min-width: 0;
 }
 
 .setup-current {

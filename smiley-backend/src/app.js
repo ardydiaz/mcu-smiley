@@ -6,6 +6,7 @@ import { env } from './config/env.js';
 import { query } from './config/database.js';
 import authRoutes from './routes/authRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
+import feedbackOptionRoutes from './routes/feedbackOptionRoutes.js';
 import userTypeRoutes from './routes/userTypeRoutes.js';
 import departmentRoutes from './routes/departmentRoutes.js';
 import locationRoutes from './routes/locationRoutes.js';
@@ -35,6 +36,7 @@ app.get('/api/ready', async (req, res) => {
 });
 app.use('/api/auth', authRoutes);
 app.use('/api/ratings', ratingRoutes);
+app.use('/api/feedback-options', feedbackOptionRoutes);
 app.use('/api/user-types', userTypeRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/locations', locationRoutes);
