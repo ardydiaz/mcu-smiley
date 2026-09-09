@@ -115,7 +115,7 @@ a {
 .kiosk-heading {
   display: grid;
   justify-items: center;
-  gap: 0.8rem;
+  gap: 2.8rem;
   text-align: center;
 }
 
@@ -671,7 +671,7 @@ a {
 }
 .feedback-form {
   display: grid;
-  gap: 1rem;
+  gap: 3rem;
   width: min(720px, 100%);
   margin: 0 auto;
 }
@@ -1942,7 +1942,7 @@ th {
 
 .feedback-option-section {
   display: grid;
-  gap: 1rem;
+  gap: 3rem;
 }
 
 .feedback-option-section h2 {
