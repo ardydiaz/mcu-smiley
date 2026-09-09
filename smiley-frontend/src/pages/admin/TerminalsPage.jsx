@@ -1,101 +1,184 @@
-import { Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { CheckCircle, Edit2, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../components/common/Button.jsx';
+import { DataTablePagination, DataTableSummary, DataTableToolbar } from '../../components/admin/DataTableControls.jsx';
 import Loading from '../../components/common/Loading.jsx';
+import Modal from '../../components/common/Modal.jsx';
 import Toast from '../../components/common/Toast.jsx';
 import { locationService } from '../../services/locationService.js';
 import { terminalService } from '../../services/terminalService.js';
 import { useApi } from '../../hooks/useApi.js';
+import { useDataTable } from '../../hooks/useDataTable.js';
+
+const emptyForm = { locationId: '', terminalCode: '', name: '', status: 'active' };
+
+function getFieldErrors(error) {
+  const errors = error?.payload?.errors || [];
+  return errors.reduce((fields, item) => {
+    if (item.field) fields[item.field] = item.message;
+    return fields;
+  }, {});
+}
 
 export default function TerminalsPage() {
   const { data: terminals, loading, error, reload } = useApi(() => terminalService.listAll(), []);
   const { data: locations, loading: locationsLoading, error: locationsError, reload: reloadLocations } = useApi(() => locationService.list(), []);
-  const [form, setForm] = useState({ locationId: '', terminalCode: '', name: '', status: 'active' });
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState(emptyForm);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [editFieldErrors, setEditFieldErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
   const [message, setMessage] = useState('');
   const locationOptions = locations || [];
+  const table = useDataTable(
+    terminals || [],
+    terminal => [
+      terminal.location_name,
+      terminal.location_id,
+      terminal.terminal_code,
+      terminal.name,
+      terminal.status,
+    ].filter(Boolean).join(' '),
+  );
+
+  function openAddModal() {
+    setForm(emptyForm);
+    setFieldErrors({});
+    setAddOpen(true);
+  }
+
+  function closeAddModal() {
+    setAddOpen(false);
+    setFieldErrors({});
+    setForm(emptyForm);
+  }
+
+  function updateForm(name, value) {
+    setForm(current => ({ ...current, [name]: value }));
+    setFieldErrors(current => ({ ...current, [name]: '' }));
+  }
+
+  function updateEditForm(name, value) {
+    setEditForm(current => ({ ...current, [name]: value }));
+    setEditFieldErrors(current => ({ ...current, [name]: '' }));
+  }
+
+  function startEdit(terminal) {
+    setEditId(terminal.id);
+    setEditFieldErrors({});
+    setEditForm({
+      locationId: String(terminal.location_id || ''),
+      terminalCode: terminal.terminal_code || '',
+      name: terminal.name || '',
+      status: terminal.status || 'active',
+    });
+  }
+
+  function closeEditModal() {
+    setEditId(null);
+    setEditFieldErrors({});
+    setEditForm(emptyForm);
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
     setMessage('');
+    setFieldErrors({});
     try {
       await terminalService.create({ ...form, locationId: Number(form.locationId) });
-      setForm({ locationId: '', terminalCode: '', name: '', status: 'active' });
+      closeAddModal();
       await reload();
       setMessage('Terminal saved');
     } catch (err) {
-      setMessage(err.message || 'Unable to save terminal');
+      const validationErrors = getFieldErrors(err);
+      if (Object.keys(validationErrors).length) {
+        setFieldErrors(validationErrors);
+        setMessage('Please check the highlighted fields');
+      } else {
+        setMessage(err.message || 'Unable to save terminal');
+      }
     } finally {
       setSaving(false);
     }
   }
 
-  async function deactivate(id) {
+  async function handleEditSubmit(event) {
+    event.preventDefault();
+    setEditSaving(true);
+    setMessage('');
+    setEditFieldErrors({});
+    try {
+      await terminalService.update(editId, { ...editForm, locationId: Number(editForm.locationId) });
+      closeEditModal();
+      await reload();
+      setMessage('Terminal updated');
+    } catch (err) {
+      const validationErrors = getFieldErrors(err);
+      if (Object.keys(validationErrors).length) {
+        setEditFieldErrors(validationErrors);
+        setMessage('Please check the highlighted fields');
+      } else {
+        setMessage(err.message || 'Unable to update terminal');
+      }
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
+  async function setTerminalStatus(terminal, status) {
     setMessage('');
     try {
-      await terminalService.deactivate(id);
+      await terminalService.update(terminal.id, {
+        locationId: Number(terminal.location_id),
+        terminalCode: terminal.terminal_code,
+        name: terminal.name,
+        status,
+      });
       await reload();
-      setMessage('Terminal deactivated');
+      setMessage(status === 'active' ? 'Terminal activated' : 'Terminal deactivated');
     } catch (err) {
-      setMessage(err.message || 'Unable to deactivate terminal');
+      setMessage(err.message || 'Unable to update terminal');
     }
+  }
+
+  function refreshAll() {
+    reload();
+    reloadLocations();
+  }
+
+  function renderLocationHint(errorId) {
+    return (
+      <>
+        {!locationsLoading && !locationOptions.length ? (
+          <p className="field-hint">No active locations yet. Create one in Management - Locations first.</p>
+        ) : null}
+        {locationsError ? <p id={errorId} className="field-hint">{locationsError}</p> : null}
+      </>
+    );
   }
 
   return (
     <>
-      <div className="page-title">
-        <h1>Terminals</h1>
-        <p>Kiosk terminals</p>
+      <div className="page-title page-title-row">
+        <div>
+          <h1>Terminals</h1>
+          <p>Kiosk terminals</p>
+        </div>
+        <div className="button-row table-action-row">
+          <Button icon={Plus} onClick={openAddModal}>Add Terminal</Button>
+          <Button variant="secondary" icon={RefreshCw} onClick={refreshAll}>Refresh</Button>
+        </div>
       </div>
-      <section className="data-panel">
-        <form className="feedback-form" onSubmit={handleSubmit}>
-          <div className="field">
-            <label htmlFor="locationId">Location</label>
-            <select
-              id="locationId"
-              value={form.locationId}
-              onChange={event => setForm(current => ({ ...current, locationId: event.target.value }))}
-              disabled={locationsLoading || !locationOptions.length}
-              required
-            >
-              <option value="">{locationsLoading ? 'Loading locations...' : 'Select location'}</option>
-              {locationOptions.map(location => (
-                <option key={location.id} value={location.id}>{location.name}</option>
-              ))}
-            </select>
-            {!locationsLoading && !locationOptions.length ? (
-              <p className="field-hint">No active locations yet. Create one in Management → Locations first.</p>
-            ) : null}
-            {locationsError ? <p className="field-hint">{locationsError}</p> : null}
-          </div>
-          <div className="field">
-            <label htmlFor="terminalCode">Terminal code</label>
-            <input
-              id="terminalCode"
-              value={form.terminalCode}
-              onChange={event => setForm(current => ({ ...current, terminalCode: event.target.value }))}
-              required
-            />
-          </div>
-          <div className="field">
-            <label htmlFor="terminalName">Terminal name</label>
-            <input
-              id="terminalName"
-              value={form.name}
-              onChange={event => setForm(current => ({ ...current, name: event.target.value }))}
-              required
-            />
-          </div>
-          <div className="button-row">
-            <Button type="submit" icon={Plus} disabled={saving || locationsLoading || !locationOptions.length}>{saving ? 'Saving' : 'Add Terminal'}</Button>
-            <Button variant="secondary" icon={RefreshCw} onClick={() => { reload(); reloadLocations(); }}>Refresh</Button>
-          </div>
-        </form>
-      </section>
+
       <section className="data-panel">
         {loading ? <Loading /> : null}
         {error ? <div className="empty-state">{error}</div> : null}
+        <DataTableToolbar table={table} searchPlaceholder="Search terminals..." />
+        <DataTableSummary table={table} itemLabel="terminals" />
         <div className="table-wrap">
           <table>
             <thead>
@@ -108,22 +191,139 @@ export default function TerminalsPage() {
               </tr>
             </thead>
             <tbody>
-              {(terminals || []).map(terminal => (
+              {table.pageItems.map(terminal => (
                 <tr key={terminal.id}>
                   <td>{terminal.location_name} #{terminal.location_id}</td>
                   <td>{terminal.terminal_code}</td>
                   <td>{terminal.name}</td>
                   <td>{terminal.status}</td>
                   <td>
-                    <Button variant="danger" icon={Trash2} onClick={() => deactivate(terminal.id)}>Deactivate</Button>
+                    <div className="button-row table-action-row">
+                      <Button variant="secondary" icon={Edit2} iconOnly aria-label="Edit terminal" onClick={() => startEdit(terminal)}>Edit</Button>
+                      {terminal.status === 'inactive' ? (
+                        <Button variant="primary" icon={CheckCircle} iconOnly aria-label="Activate terminal" onClick={() => setTerminalStatus(terminal, 'active')}>Activate</Button>
+                      ) : (
+                        <Button variant="danger" icon={Trash2} iconOnly aria-label="Deactivate terminal" onClick={() => setTerminalStatus(terminal, 'inactive')}>Deactivate</Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        {!loading && !error && !terminals?.length ? <div className="empty-state">No terminals found.</div> : null}
+        {!loading && !error && !table.pageItems.length ? <div className="empty-state">No terminals found.</div> : null}
+        <DataTablePagination table={table} />
       </section>
+
+      {addOpen ? (
+        <Modal title="Add Terminal" onClose={closeAddModal} footer={null}>
+          <form className="rating-option-form rating-option-modal-form" onSubmit={handleSubmit} noValidate>
+            <div className={'field' + (fieldErrors.locationId ? ' field-error' : '')}>
+              <label htmlFor="locationId">Location <span className="required-mark" aria-hidden="true">*</span></label>
+              <select
+                id="locationId"
+                value={form.locationId}
+                onChange={event => updateForm('locationId', event.target.value)}
+                disabled={locationsLoading || !locationOptions.length}
+                aria-invalid={fieldErrors.locationId ? 'true' : 'false'}
+                aria-describedby={fieldErrors.locationId ? 'terminal-location-error' : undefined}
+              >
+                <option value="">{locationsLoading ? 'Loading locations...' : 'Select location'}</option>
+                {locationOptions.map(location => (
+                  <option key={location.id} value={location.id}>{location.name}</option>
+                ))}
+              </select>
+              {fieldErrors.locationId ? <p id="terminal-location-error" className="field-error-text">{fieldErrors.locationId}</p> : null}
+              {renderLocationHint('terminal-location-hint')}
+            </div>
+            <div className={'field' + (fieldErrors.terminalCode ? ' field-error' : '')}>
+              <label htmlFor="terminalCode">Terminal code <span className="required-mark" aria-hidden="true">*</span></label>
+              <input
+                id="terminalCode"
+                value={form.terminalCode}
+                onChange={event => updateForm('terminalCode', event.target.value)}
+                aria-invalid={fieldErrors.terminalCode ? 'true' : 'false'}
+                aria-describedby={fieldErrors.terminalCode ? 'terminal-code-error' : undefined}
+                autoFocus
+              />
+              {fieldErrors.terminalCode ? <p id="terminal-code-error" className="field-error-text">{fieldErrors.terminalCode}</p> : null}
+            </div>
+            <div className={'field' + (fieldErrors.name ? ' field-error' : '')}>
+              <label htmlFor="terminalName">Terminal name <span className="required-mark" aria-hidden="true">*</span></label>
+              <input
+                id="terminalName"
+                value={form.name}
+                onChange={event => updateForm('name', event.target.value)}
+                aria-invalid={fieldErrors.name ? 'true' : 'false'}
+                aria-describedby={fieldErrors.name ? 'terminal-name-error' : undefined}
+              />
+              {fieldErrors.name ? <p id="terminal-name-error" className="field-error-text">{fieldErrors.name}</p> : null}
+            </div>
+            <div className="button-row rating-option-modal-actions">
+              <Button type="submit" icon={Plus} disabled={saving || locationsLoading || !locationOptions.length}>{saving ? 'Saving' : 'Add Terminal'}</Button>
+              <Button type="button" variant="secondary" icon={X} onClick={closeAddModal}>Cancel</Button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
+
+      {editId ? (
+        <Modal title="Edit Terminal" onClose={closeEditModal} footer={null}>
+          <form className="rating-option-form rating-option-modal-form" onSubmit={handleEditSubmit} noValidate>
+            <div className={'field' + (editFieldErrors.locationId ? ' field-error' : '')}>
+              <label htmlFor="editTerminalLocation">Location <span className="required-mark" aria-hidden="true">*</span></label>
+              <select
+                id="editTerminalLocation"
+                value={editForm.locationId}
+                onChange={event => updateEditForm('locationId', event.target.value)}
+                disabled={locationsLoading || !locationOptions.length}
+                aria-invalid={editFieldErrors.locationId ? 'true' : 'false'}
+              >
+                <option value="">{locationsLoading ? 'Loading locations...' : 'Select location'}</option>
+                {locationOptions.map(location => (
+                  <option key={location.id} value={location.id}>{location.name}</option>
+                ))}
+              </select>
+              {editFieldErrors.locationId ? <p className="field-error-text">{editFieldErrors.locationId}</p> : null}
+              {renderLocationHint('edit-terminal-location-hint')}
+            </div>
+            <div className={'field' + (editFieldErrors.terminalCode ? ' field-error' : '')}>
+              <label htmlFor="editTerminalCode">Terminal code <span className="required-mark" aria-hidden="true">*</span></label>
+              <input
+                id="editTerminalCode"
+                value={editForm.terminalCode}
+                onChange={event => updateEditForm('terminalCode', event.target.value)}
+                aria-invalid={editFieldErrors.terminalCode ? 'true' : 'false'}
+                autoFocus
+              />
+              {editFieldErrors.terminalCode ? <p className="field-error-text">{editFieldErrors.terminalCode}</p> : null}
+            </div>
+            <div className={'field' + (editFieldErrors.name ? ' field-error' : '')}>
+              <label htmlFor="editTerminalName">Terminal name <span className="required-mark" aria-hidden="true">*</span></label>
+              <input
+                id="editTerminalName"
+                value={editForm.name}
+                onChange={event => updateEditForm('name', event.target.value)}
+                aria-invalid={editFieldErrors.name ? 'true' : 'false'}
+              />
+              {editFieldErrors.name ? <p className="field-error-text">{editFieldErrors.name}</p> : null}
+            </div>
+            <div className="field">
+              <label htmlFor="editTerminalStatus">Status</label>
+              <select id="editTerminalStatus" value={editForm.status} onChange={event => updateEditForm('status', event.target.value)}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <div className="button-row rating-option-modal-actions">
+              <Button type="submit" icon={Save} disabled={editSaving || locationsLoading || !locationOptions.length}>{editSaving ? 'Saving' : 'Save Changes'}</Button>
+              <Button type="button" variant="secondary" icon={X} onClick={closeEditModal}>Cancel</Button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
+
       <Toast message={message} />
     </>
   );

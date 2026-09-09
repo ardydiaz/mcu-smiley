@@ -3,6 +3,7 @@ import { createContext, useCallback, useMemo, useState } from 'react';
 const initialState = {
   rating: null,
   userType: null,
+  feedbackOption: null,
   feedback: '',
 };
 

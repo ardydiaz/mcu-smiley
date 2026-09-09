@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import Loading from '../../components/common/Loading.jsx';
 import SmileyGrid from '../../components/voting/SmileyGrid.jsx';
 import { kioskService } from '../../services/kioskService.js';
 import { useApi } from '../../hooks/useApi.js';
@@ -15,11 +14,11 @@ const fallbackRatings = [
 export default function SmileyPage() {
   const navigate = useNavigate();
   const { updateVote } = useVoting();
-  const { data, loading } = useApi(() => kioskService.listRatings(), []);
+  const { data } = useApi(() => kioskService.listRatings(), []);
   const ratings = (data?.length ? data : fallbackRatings).filter(rating => Number(rating.score) !== 1);
 
   function handleSelect(rating) {
-    updateVote({ rating, userType: null, feedback: '' });
+    updateVote({ rating, userType: null, feedbackOption: null, feedback: '' });
     navigate('/kiosk/user-type');
   }
 
@@ -30,7 +29,7 @@ export default function SmileyPage() {
         <h1>How was your experience?</h1>
         <p>Your feedback helps us improve each visit.</p>
       </div>
-      {loading && !data ? <Loading label="Loading ratings" /> : <SmileyGrid ratings={ratings} onSelect={handleSelect} />}
+      <SmileyGrid ratings={ratings} onSelect={handleSelect} />
     </section>
   );
 }

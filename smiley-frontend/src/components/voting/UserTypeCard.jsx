@@ -1,19 +1,15 @@
 const icons = {
-  Student: 'ST',
-  'Faculty / Employee': 'FE',
-  Alumni: 'AL',
-  Others: 'OT',
+  Student: String.fromCodePoint(0x1f393),
+  'Faculty / Employee': String.fromCodePoint(0x1f4bc),
+  Alumni: String.fromCodePoint(0x1f91d),
+  Others: String.fromCodePoint(0x2728),
 };
 
 export default function UserTypeCard({ userType, onSelect }) {
   return (
-    <button className="department-card user-type-card" type="button" onClick={() => onSelect(userType)}>
-      <span className="department-icon user-type-icon" aria-hidden="true">{icons[userType.name] || userType.name.slice(0, 2).toUpperCase()}</span>
-      <span className="department-copy">
-        <strong>{userType.name}</strong>
-        <span>Continue as {userType.name}</span>
-      </span>
-      <span className="user-type-check" aria-hidden="true"></span>
+    <button className="user-type-choice" type="button" onClick={() => onSelect(userType)}>
+      <span className="user-type-choice-icon" aria-hidden="true">{icons[userType.name] || String.fromCodePoint(0x1f464)}</span>
+      <strong>{userType.name}</strong>
     </button>
   );
 }
