@@ -1,4 +1,4 @@
-import { apiRequest } from './api.js';
+import { apiBaseUrl, apiRequest } from './api.js';
 
 export const authService = {
   async register(data) {
@@ -15,5 +15,23 @@ export const authService = {
   },
   async me() {
     return apiRequest('/auth/me');
+  },
+  async ssoConfig() {
+    return apiRequest('/auth/sso/config', { auth: 'none' });
+  },
+  ssoStartUrl(returnTo = '/admin/dashboard') {
+    const query = new URLSearchParams({ returnTo });
+    return apiBaseUrl + '/auth/sso/start?' + query.toString();
+  },
+  async listUsers() {
+    const response = await apiRequest('/auth/users');
+    return response.data;
+  },
+  async updateUserAccess(id, data) {
+    const response = await apiRequest('/auth/users/' + id + '/access', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return response.data;
   },
 };

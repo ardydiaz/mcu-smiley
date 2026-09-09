@@ -56,7 +56,7 @@ export default function DashboardPage() {
   const satisfactionRate = data?.totalVotes ? (Number(data.positiveVotes || 0) / Number(data.totalVotes)) * 100 : 0;
 
   return (
-    <>
+    <div className="dashboard-page">
       <div className="page-title">
         <h1>Dashboard</h1>
         <p>Live survey summary</p>
@@ -78,6 +78,6 @@ export default function DashboardPage() {
           </div>
         </>
       ) : null}
-    </>
+    </div>
   );
 }

@@ -7,6 +7,10 @@ export function getToken() {
   return localStorage.getItem(tokenKey);
 }
 
+export function setToken(token) {
+  localStorage.setItem(tokenKey, token);
+}
+
 export function setSession({ token, user }) {
   localStorage.setItem(tokenKey, token);
   localStorage.setItem(userKey, JSON.stringify(user));
