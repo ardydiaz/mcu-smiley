@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { menuPermissionKeys, normalizePermissions } from '../config/menuPermissions.js';
 import { env } from '../config/env.js';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/response.js';
@@ -15,7 +16,8 @@ async function authenticate(req) {
   if (!payload.sub || !/^\d+$/.test(payload.sub)) throw new AppError('Invalid access token', 401);
   const user = await User.findById(Number(payload.sub));
   if (!user || !user.active) throw new AppError('Account unavailable', 401);
-  return { id: user.id, name: user.name, email: user.email, role: user.role };
+  const permissions = user.role === 'admin' ? menuPermissionKeys : await User.listPermissions(user.id);
+  return { id: user.id, name: user.name, email: user.email, role: user.role, permissions: normalizePermissions(user.role, permissions) };
 }
 
 export async function requireAuth(req, res, next) {
@@ -29,6 +31,15 @@ export function requireRole(...roles) {
     if (!req.user) throw new AppError('Authentication required', 401);
     if (!roles.includes(req.user.role)) throw new AppError('Administrator access required', 403);
     next();
+  };
+}
+
+export function requirePermission(permission) {
+  return (req, res, next) => {
+    if (!req.user) throw new AppError('Authentication required', 401);
+    if (req.user.role === 'admin') return next();
+    if (req.user.permissions?.includes(permission)) return next();
+    throw new AppError('You do not have access to this menu', 403);
   };
 }
 

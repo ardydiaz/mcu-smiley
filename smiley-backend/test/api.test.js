@@ -5,10 +5,23 @@ import jwt from 'jsonwebtoken';
 
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-only-secret-at-least-32-characters-long';
+process.env.SSO_ENABLED = 'false';
+process.env.SSO_PROVIDER_NAME = 'SSO';
+process.env.SSO_AUTHORIZATION_URL = '';
+process.env.SSO_TOKEN_URL = '';
+process.env.SSO_USERINFO_URL = '';
+process.env.SSO_CLIENT_ID = '';
+process.env.SSO_CLIENT_SECRET = '';
+process.env.SSO_REDIRECT_URI = '';
+process.env.AZURE_CLIENT_ID = '';
+process.env.AZURE_CLIENT_SECRET = '';
+process.env.AZURE_TENANT_ID = '';
+process.env.AZURE_REDIRECT_URI = '';
 const { default: app } = await import('../src/app.js');
 const { pool } = await import('../src/config/database.js');
 const { User } = await import('../src/models/User.js');
 const { voteSchema, filterSchema } = await import('../src/validations/voteValidation.js');
+const { userAccessSchema } = await import('../src/validations/authValidation.js');
 const { departmentSchema } = await import('../src/validations/departmentValidation.js');
 const { locationSchema } = await import('../src/validations/locationValidation.js');
 const { terminalSchema, terminalQuerySchema } = await import('../src/validations/terminalValidation.js');
@@ -52,8 +65,14 @@ test('swagger docs and OpenAPI JSON are available', async () => {
   assert.ok(document.paths['/terminal-departments']);
   assert.ok(document.components.securitySchemes.bearerAuth);
 });
+test('SSO config is visible and SSO start is disabled by default', async () => {
+  const config = await fetch(base + '/api/auth/sso/config');
+  assert.equal(config.status, 200);
+  assert.deepEqual((await config.json()).data, { enabled: false, providerName: 'SSO' });
+  assert.equal((await fetch(base + '/api/auth/sso/start')).status, 404);
+});
 test('admin endpoints reject missing or forged credentials', async () => {
-  for (const route of ['/api/auth/me', '/api/votes', '/api/departments/all', '/api/locations/all', '/api/terminals/all', '/api/terminal-departments', '/api/feedback-options/all', '/api/dashboard', '/api/reports', '/api/reports/csv']) {
+  for (const route of ['/api/auth/me', '/api/auth/users', '/api/votes', '/api/departments/all', '/api/locations/all', '/api/terminals/all', '/api/terminal-departments', '/api/feedback-options/all', '/api/dashboard', '/api/reports', '/api/reports/csv']) {
     assert.equal((await fetch(base + route)).status, 401);
     assert.equal((await fetch(base + route, { headers: { authorization: 'Bearer forged' } })).status, 401);
   }
@@ -76,13 +95,18 @@ test('valid token loads current administrator and disabled users are rejected', 
 });
 test('valid authenticated non-admin users cannot access admin endpoints', async () => {
   const original = User.findById;
+  const originalListPermissions = User.listPermissions;
   const token = jwt.sign({}, process.env.JWT_SECRET, { subject: '2', issuer: 'smiley-api', audience: 'smiley-admin', expiresIn: '1h' });
   const headers = { authorization: 'Bearer ' + token };
   try {
-    User.findById = async () => ({ id: 2, name: 'Viewer', email: 'viewer@example.com', role: 'viewer', active: 1 });
+    User.findById = async () => ({ id: 2, name: 'User', email: 'user@example.com', role: 'user', active: 1 });
+    User.listPermissions = async () => [];
     assert.equal((await fetch(base + '/api/auth/me', { headers })).status, 200);
     assert.equal((await fetch(base + '/api/dashboard', { headers })).status, 403);
-  } finally { User.findById = original; }
+  } finally {
+    User.findById = original;
+    User.listPermissions = originalListPermissions;
+  }
 });
 test('registration creates the first admin account with a hashed password', async () => {
   const originalCountAdmins = User.countAdmins;
@@ -136,6 +160,11 @@ test('validation bounds IDs, feedback, pagination and date ranges', () => {
   assert.equal(filterSchema.safeParse({ userTypeId: '1' }).success, true);
   assert.equal(filterSchema.safeParse({ limit: '101' }).success, false);
   assert.equal(filterSchema.parse({}).limit, 25);
+  assert.equal(userAccessSchema.safeParse({ role: 'admin', status: 'active' }).success, true);
+  assert.equal(userAccessSchema.safeParse({ role: 'user', status: 'active', permissions: ['dashboard'] }).success, true);
+  assert.equal(userAccessSchema.safeParse({ role: 'user', status: 'active', permissions: [] }).success, false);
+  assert.equal(userAccessSchema.safeParse({ role: 'user', status: 'pending' }).success, true);
+  assert.equal(userAccessSchema.safeParse({ role: 'viewer', status: 'active' }).success, false);
 });
 test('department, location and terminal validation require IDs and names', () => {
   assert.equal(departmentSchema.safeParse({ name: 'Student Services', description: 'Student services office' }).success, true);

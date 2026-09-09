@@ -7,6 +7,8 @@ const booleanEnv = z.preprocess(
   value => value === undefined ? 'false' : String(value).toLowerCase(),
   z.enum(['true', 'false']).transform(value => value === 'true'),
 );
+const optionalString = z.preprocess(value => String(value || '').trim() || undefined, z.string().optional());
+const optionalUrl = z.preprocess(value => String(value || '').trim() || undefined, z.string().url().optional());
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(5000),
@@ -19,6 +21,20 @@ const schema = z.object({
   JWT_SECRET: z.string().default(''),
   JWT_EXPIRES_IN: z.string().regex(/^\d+[smhd]$/).default('8h'),
   ALLOW_ADMIN_REGISTRATION: booleanEnv.default(false),
+  FRONTEND_URL: optionalUrl,
+  SSO_ENABLED: booleanEnv.default(false),
+  SSO_PROVIDER_NAME: z.string().default('SSO'),
+  SSO_AUTHORIZATION_URL: optionalUrl,
+  SSO_TOKEN_URL: optionalUrl,
+  SSO_USERINFO_URL: optionalUrl,
+  SSO_CLIENT_ID: optionalString,
+  SSO_CLIENT_SECRET: optionalString,
+  SSO_REDIRECT_URI: optionalUrl,
+  SSO_SCOPES: z.string().default('openid email profile'),
+  AZURE_CLIENT_ID: optionalString,
+  AZURE_CLIENT_SECRET: optionalString,
+  AZURE_TENANT_ID: optionalString,
+  AZURE_REDIRECT_URI: optionalUrl,
 });
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
