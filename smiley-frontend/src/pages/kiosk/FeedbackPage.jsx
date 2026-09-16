@@ -90,11 +90,14 @@ export default function FeedbackPage() {
   }
 
   return (
-    <section className="kiosk-panel">
+    <section className="kiosk-panel feedback-page">
       <div className="kiosk-heading">
         <span className="kiosk-eyebrow">Step 3 of 3</span>
         <h1>Tell us more</h1>
-        <p>{vote.userType?.name || ''}</p>
+        <p className="feedback-user-type">
+          <span>User type</span>
+          <strong>{vote.userType?.name || ''}</strong>
+        </p>
       </div>
       <FeedbackForm
         value={vote.feedback}

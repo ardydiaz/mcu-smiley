@@ -190,7 +190,7 @@ export default function DepartmentsPage() {
 
       {addOpen ? (
         <Modal title="Add Department" onClose={closeAddModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form" onSubmit={handleSubmit} noValidate>
+          <form className="rating-option-form rating-option-modal-form AddDep" onSubmit={handleSubmit} noValidate>
             <div className={'field' + (fieldErrors.name ? ' field-error' : '')}>
               <label htmlFor="name">Name <span className="required-mark" aria-hidden="true">*</span></label>
               <input

@@ -1,6 +1,7 @@
 const tokenKey = 'smiley_auth_token';
 const userKey = 'smiley_auth_user';
 const kioskTerminalKey = 'smiley_kiosk_terminal';
+const kioskDeviceKey = 'smiley_kiosk_device_id';
 const envTerminalCode = import.meta.env.VITE_TERMINAL_CODE?.trim() || '';
 
 export function getToken() {
@@ -74,4 +75,14 @@ export function getKioskTerminalCode() {
 
 export function clearKioskTerminal() {
   localStorage.removeItem(kioskTerminalKey);
+}
+
+export function getKioskDeviceId() {
+  const existing = localStorage.getItem(kioskDeviceKey);
+  if (existing) return existing;
+  const generated = globalThis.crypto?.randomUUID
+    ? globalThis.crypto.randomUUID()
+    : 'kiosk-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  localStorage.setItem(kioskDeviceKey, generated);
+  return generated;
 }

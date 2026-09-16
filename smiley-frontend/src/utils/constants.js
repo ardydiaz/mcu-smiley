@@ -4,4 +4,4 @@ export const routes = {
   adminDashboard: '/admin/dashboard',
 };
 
-export const resetDelayMs = 2500;
+export const resetDelayMs = 5000;

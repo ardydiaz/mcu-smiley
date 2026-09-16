@@ -1,4 +1,4 @@
-import { apiRequest } from './api.js';
+import { apiBaseUrl, apiRequest, buildQuery } from './api.js';
 
 export const terminalService = {
   async list() {
@@ -30,5 +30,36 @@ export const terminalService = {
   async deactivate(id) {
     const response = await apiRequest('/terminals/' + id, { method: 'DELETE' });
     return response.data;
+  },
+  async listAvailableForKiosk(deviceId) {
+    const response = await apiRequest('/kiosk/terminals/available' + buildQuery({ deviceId }), { auth: 'none' });
+    return response.data;
+  },
+  async assignForKiosk({ terminalCode, deviceId }) {
+    const response = await apiRequest('/kiosk/terminals/assign', {
+      auth: 'none',
+      method: 'POST',
+      body: JSON.stringify({ terminalCode, deviceId }),
+    });
+    return response.data;
+  },
+  async heartbeatForKiosk({ terminalCode, deviceId }) {
+    const response = await apiRequest('/kiosk/terminals/heartbeat', {
+      auth: 'none',
+      method: 'POST',
+      body: JSON.stringify({ terminalCode, deviceId }),
+    });
+    return response.data;
+  },
+  async releaseForKiosk({ terminalCode, deviceId }) {
+    const response = await apiRequest('/kiosk/terminals/release', {
+      auth: 'none',
+      method: 'POST',
+      body: JSON.stringify({ terminalCode, deviceId }),
+    });
+    return response.data;
+  },
+  kioskEventsUrl() {
+    return apiBaseUrl + '/kiosk/terminals/events';
   },
 };

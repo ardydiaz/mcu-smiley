@@ -1,12 +1,12 @@
 import { CheckCircle2, MapPin, Monitor, RefreshCcw, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/common/Button.jsx';
 import Loading from '../../components/common/Loading.jsx';
 import Toast from '../../components/common/Toast.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { terminalService } from '../../services/terminalService.js';
-import { clearKioskTerminal, getKioskTerminal, setKioskTerminal } from '../../utils/storage.js';
+import { clearKioskTerminal, getKioskDeviceId, getKioskTerminal, setKioskTerminal } from '../../utils/storage.js';
 
 function getSafeNext(value) {
   if (!value || value === '/kiosk/setup') return '/kiosk/smiley';
@@ -16,30 +16,57 @@ function getSafeNext(value) {
 export default function KioskSetupPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const deviceId = getKioskDeviceId();
   const currentTerminal = getKioskTerminal();
   const [selectedCode, setSelectedCode] = useState(currentTerminal?.terminalCode || '');
   const [message, setMessage] = useState('');
-  const { data, loading, error, reload } = useApi(() => terminalService.list(), []);
+  const [saving, setSaving] = useState(false);
+  const { data, loading, error, reload } = useApi(() => terminalService.listAvailableForKiosk(deviceId), [deviceId]);
   const terminals = data || [];
   const selectedTerminal = useMemo(
     () => terminals.find(terminal => terminal.terminal_code === selectedCode),
     [terminals, selectedCode],
   );
 
-  function saveTerminal(event) {
+  useEffect(() => {
+    const events = new EventSource(terminalService.kioskEventsUrl());
+    const refresh = () => reload().catch(() => {});
+    events.addEventListener('terminal-reservations-changed', refresh);
+    return () => {
+      events.removeEventListener('terminal-reservations-changed', refresh);
+      events.close();
+    };
+  }, [reload]);
+
+  async function saveTerminal(event) {
     event.preventDefault();
     if (!selectedTerminal) {
       setMessage('Please select the terminal for this tablet.');
       return;
     }
-    setKioskTerminal(selectedTerminal);
-    navigate(getSafeNext(searchParams.get('next')), { replace: true });
+    setSaving(true);
+    setMessage('');
+    try {
+      const terminal = await terminalService.assignForKiosk({ terminalCode: selectedTerminal.terminal_code, deviceId });
+      setKioskTerminal(terminal);
+      navigate(getSafeNext(searchParams.get('next')), { replace: true });
+    } catch (error) {
+      setMessage(error.message || 'Unable to select terminal.');
+      await reload().catch(() => {});
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function removeSetup() {
+  async function removeSetup() {
+    const terminalCode = currentTerminal?.terminalCode;
     clearKioskTerminal();
     setSelectedCode('');
     setMessage('Tablet setup was cleared.');
+    if (terminalCode) {
+      await terminalService.releaseForKiosk({ terminalCode, deviceId }).catch(() => {});
+      await reload().catch(() => {});
+    }
   }
 
   return (
@@ -68,7 +95,7 @@ export default function KioskSetupPage() {
               id="kiosk-terminal"
               value={selectedCode}
               onChange={event => setSelectedCode(event.target.value)}
-              disabled={loading}
+              disabled={loading || saving}
             >
               <option value="">Select terminal</option>
               {terminals.map(terminal => (
@@ -88,14 +115,14 @@ export default function KioskSetupPage() {
           ) : null}
         </div>
 
-        {loading ? <Loading label="Loading terminals" /> : null}
+        {loading ? <Loading label="Loading available terminals" /> : null}
         {error ? <div className="empty-state">{error}</div> : null}
-        {!loading && !error && !terminals.length ? <div className="empty-state">No active terminals found. Add terminals in Admin first.</div> : null}
+        {!loading && !error && !terminals.length ? <div className="empty-state">No available terminals found. Clear another kiosk setup or add terminals in Admin first.</div> : null}
 
         <div className="button-row setup-actions">
-          <Button type="submit" icon={CheckCircle2} disabled={loading || !selectedTerminal}>Save Tablet</Button>
-          <Button type="button" variant="secondary" icon={RefreshCcw} onClick={() => reload().catch(() => {})} disabled={loading}>Refresh</Button>
-          {currentTerminal ? <Button type="button" variant="danger" icon={Trash2} onClick={removeSetup}>Clear</Button> : null}
+          <Button type="submit" icon={CheckCircle2} disabled={loading || saving || !selectedTerminal}>{saving ? 'Saving' : 'Save Tablet'}</Button>
+          <Button type="button" variant="secondary" icon={RefreshCcw} onClick={() => reload().catch(() => {})} disabled={loading || saving}>Refresh</Button>
+          {currentTerminal ? <Button type="button" variant="danger" icon={Trash2} onClick={removeSetup} disabled={saving}>Clear</Button> : null}
         </div>
       </form>
 

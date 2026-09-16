@@ -61,8 +61,14 @@ export default function TerminalDepartmentsPage() {
   const editDepartmentSet = new Set(editDepartmentIds);
   const editTargetAssignments = (assignments || []).filter(assignment => String(assignment.terminal_id) === String(editTerminalId));
   const editTargetDepartmentIds = new Set(editTargetAssignments.map(assignment => String(assignment.department_id)));
+  const editOriginalDepartmentIds = new Set((editGroup?.departments || []).map(department => String(department.department_id)));
   const editSelectedDepartments = getDepartmentsForIds(editDepartmentIds, departmentOptions, editGroup?.departments || []);
-  const editAvailableDepartments = departmentOptions.filter(department => !editDepartmentSet.has(String(department.id)));
+  const editAvailableDepartments = departmentOptions.filter(department => {
+    const id = String(department.id);
+    if (editDepartmentSet.has(id)) return false;
+    if (editTargetDepartmentIds.has(id) && !editOriginalDepartmentIds.has(id)) return false;
+    return true;
+  });
   const canSubmit = Boolean(!saving && terminalId && selectedDepartmentIds.length);
   const canSaveEdit = Boolean(!editSaving && editGroup && editTerminalId);
 
@@ -109,6 +115,11 @@ export default function TerminalDepartmentsPage() {
 
   function addDepartment(departmentId) {
     if (!departmentId) return;
+    if (assignedDepartmentIds.has(String(departmentId))) {
+      const department = selectedTerminalAssignments.find(assignment => String(assignment.department_id) === String(departmentId));
+      setMessage((department?.department_name || 'Department') + ' is already assigned to this terminal.');
+      return;
+    }
     setSelectedDepartmentIds(current => current.includes(departmentId) ? current : [...current, departmentId]);
   }
 
@@ -118,6 +129,11 @@ export default function TerminalDepartmentsPage() {
 
   function addEditDepartment(departmentId) {
     if (!departmentId) return;
+    if (editTargetDepartmentIds.has(String(departmentId)) && !editOriginalDepartmentIds.has(String(departmentId))) {
+      const department = editTargetAssignments.find(assignment => String(assignment.department_id) === String(departmentId));
+      setMessage((department?.department_name || 'Department') + ' is already assigned to the selected terminal.');
+      return;
+    }
     setEditDepartmentIds(current => current.includes(departmentId) ? current : [...current, departmentId]);
   }
 
@@ -309,6 +325,9 @@ export default function TerminalDepartmentsPage() {
               ) : null}
               {!departmentsLoading && !departmentOptions.length ? (
                 <p className="field-hint">No active departments yet. Create one in Management - Departments first.</p>
+              ) : null}
+              {editTerminalId && !departmentsLoading && !editAvailableDepartments.length && departmentOptions.length ? (
+                <p className="field-hint">All active departments are already selected or assigned to this terminal.</p>
               ) : null}
               {departmentsError ? <p className="field-hint">{departmentsError}</p> : null}
               {selectedDepartments.length ? (

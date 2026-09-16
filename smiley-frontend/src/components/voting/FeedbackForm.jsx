@@ -1,4 +1,4 @@
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Check, Send } from 'lucide-react';
 import Button from '../common/Button.jsx';
 import Loading from '../common/Loading.jsx';
 
@@ -25,6 +25,7 @@ export default function FeedbackForm({ value, selectedOption, options = [], load
                   aria-pressed={active}
                 >
                   <span>{option.label}</span>
+                  {active ? <Check className="feedback-option-check" aria-hidden="true" /> : null}
                   {option.requiresText || option.requires_text ? <small>Specify</small> : null}
                 </button>
               );
