@@ -40,6 +40,16 @@ export const TerminalDepartmentAssignment = {
     const rows = await query(assignmentSelect + ' WHERE a.id = ?', [id]);
     return rows[0];
   },
+  async findDuplicate({ terminalId, departmentId }, excludeId) {
+    const parameters = [terminalId, departmentId];
+    let sql = assignmentSelect + ' WHERE a.terminal_id = ? AND a.department_id = ?';
+    if (excludeId) {
+      sql += ' AND a.id <> ?';
+      parameters.push(excludeId);
+    }
+    const rows = await query(sql, parameters);
+    return rows[0];
+  },
   async create({ terminalId, departmentId }) {
     const result = await query(
       'INSERT INTO terminal_departments (terminal_id, department_id) VALUES (?, ?)',

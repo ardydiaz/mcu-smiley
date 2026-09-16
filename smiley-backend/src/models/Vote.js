@@ -46,6 +46,10 @@ function appendDepartmentFilter(where, parameters, departmentId) {
   };
 }
 
+function appendWhere(where, clause) {
+  return where + (where ? ' AND ' : ' WHERE ') + clause;
+}
+
 const joined = ' FROM votes v JOIN ratings r ON r.id = v.rating_id JOIN user_types ut ON ut.id = v.user_type_id LEFT JOIN departments d ON d.id = v.department_id LEFT JOIN locations l ON l.id = v.location_id LEFT JOIN terminals t ON t.id = v.terminal_id LEFT JOIN feedback_options fo ON fo.id = v.feedback_option_id';
 
 export const Vote = {
@@ -66,7 +70,33 @@ export const Vote = {
     const ratings = await query('SELECT r.id, r.name AS label, r.emoji, r.value AS score, COUNT(*) AS votes' + joined + where + ' GROUP BY r.id, r.name, r.emoji, r.value ORDER BY r.value DESC', parameters);
     const departmentFilter = appendDepartmentFilter(where, parameters, filters.departmentId);
     const departments = await query('SELECT d2.id, d2.name, COUNT(*) AS votes, AVG(r.value) AS averageScore FROM ' + voteDepartmentSource + ' JOIN votes v ON v.id = vdm.vote_id JOIN ratings r ON r.id = v.rating_id JOIN user_types ut ON ut.id = v.user_type_id JOIN departments d2 ON d2.id = vdm.department_id LEFT JOIN departments d ON d.id = v.department_id LEFT JOIN locations l ON l.id = v.location_id LEFT JOIN terminals t ON t.id = v.terminal_id' + departmentFilter.where + ' GROUP BY d2.id, d2.name ORDER BY votes DESC, d2.name', departmentFilter.parameters);
-    const daily = await query('SELECT DATE(v.created_at) AS date, COUNT(*) AS votes' + joined + where + ' GROUP BY DATE(v.created_at) ORDER BY date', parameters);
-    return { totalVotes: Number(summary.totalVotes), averageScore: Number(summary.averageScore), positiveVotes: Number(summary.positiveVotes), ratings, departments, daily };
+    const daily = await query('SELECT DATE(v.created_at) AS date, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY DATE(v.created_at) ORDER BY date', parameters);
+    const userTypes = await query('SELECT ut.id, ut.name, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY ut.id, ut.name ORDER BY votes DESC, ut.name', parameters);
+    const locations = await query('SELECT l.id, COALESCE(l.name, \'No location\') AS name, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY l.id, l.name ORDER BY votes DESC, name', parameters);
+    const terminals = await query('SELECT t.id, COALESCE(t.terminal_code, \'No terminal\') AS terminal_code, COALESCE(t.name, \'No terminal\') AS name, COALESCE(l.name, \'\') AS location_name, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY t.id, t.terminal_code, t.name, l.name ORDER BY votes DESC, terminal_code LIMIT 10', parameters);
+    const feedbackOptions = await query('SELECT fo.id, COALESCE(fo.label, \'No selected option\') AS label, r.name AS rating, r.emoji, r.value AS score, COUNT(*) AS votes, AVG(r.value) AS averageScore' + joined + where + ' GROUP BY fo.id, fo.label, r.name, r.emoji, r.value ORDER BY votes DESC, label LIMIT 10', parameters);
+    const issues = await query('SELECT fo.id, COALESCE(fo.label, \'Written feedback only\') AS label, r.name AS rating, r.emoji, r.value AS score, COUNT(*) AS votes' + joined + appendWhere(where, 'r.value <= 3') + ' GROUP BY fo.id, fo.label, r.name, r.emoji, r.value ORDER BY votes DESC, score ASC, label LIMIT 8', parameters);
+    return {
+      totalVotes: Number(summary.totalVotes),
+      averageScore: Number(summary.averageScore),
+      positiveVotes: Number(summary.positiveVotes),
+      ratings,
+      departments,
+      daily,
+      userTypes,
+      locations,
+      terminals,
+      feedbackOptions,
+      issues,
+    };
+  },
+  async periodSummary(filters, from, to) {
+    const { where, parameters } = voteFilter({ ...filters, from, to });
+    const [summary] = await query('SELECT COUNT(*) AS totalVotes, COALESCE(AVG(r.value), 0) AS averageScore, COALESCE(SUM(r.value >= 4), 0) AS positiveVotes' + joined + where, parameters);
+    return {
+      totalVotes: Number(summary.totalVotes),
+      averageScore: Number(summary.averageScore),
+      positiveVotes: Number(summary.positiveVotes),
+    };
   },
 };
