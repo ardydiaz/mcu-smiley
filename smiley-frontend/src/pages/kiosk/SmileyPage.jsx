@@ -18,7 +18,7 @@ export default function SmileyPage() {
   const ratings = (data?.length ? data : fallbackRatings).filter(rating => Number(rating.score) !== 1);
 
   function handleSelect(rating) {
-    updateVote({ rating, userType: null, feedbackOption: null, feedback: '' });
+    updateVote({ rating, userType: null, feedbackOptions: [], feedback: '' });
     navigate('/kiosk/user-type');
   }
 

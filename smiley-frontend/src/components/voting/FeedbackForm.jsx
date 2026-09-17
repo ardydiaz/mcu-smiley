@@ -2,10 +2,10 @@ import { ArrowLeft, Check, Send } from 'lucide-react';
 import Button from '../common/Button.jsx';
 import Loading from '../common/Loading.jsx';
 
-export default function FeedbackForm({ value, selectedOption, options = [], loading, optionsLoading, onChange, onOptionSelect, onSubmit, onBack }) {
+export default function FeedbackForm({ value, selectedOptions = [], options = [], loading, optionsLoading, onChange, onOptionSelect, onSubmit, onBack }) {
   const remainingCharacters = 2000 - value.length;
-  const requiresText = selectedOption?.requiresText || selectedOption?.requires_text;
-  const canSubmit = selectedOption && (!requiresText || value.trim());
+  const requiresText = selectedOptions.some(option => option.requiresText || option.requires_text);
+  const canSubmit = selectedOptions.length > 0 && (!requiresText || value.trim());
 
   return (
     <form className="feedback-form feedback-choice-form" onSubmit={onSubmit} noValidate>
@@ -15,7 +15,7 @@ export default function FeedbackForm({ value, selectedOption, options = [], load
         {!optionsLoading && options.length ? (
           <div className="feedback-option-grid">
             {options.map(option => {
-              const active = selectedOption?.id === option.id;
+              const active = selectedOptions.some(selected => selected.id === option.id);
               return (
                 <button
                   key={option.id}

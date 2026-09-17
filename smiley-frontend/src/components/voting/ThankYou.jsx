@@ -38,7 +38,7 @@ export default function ThankYou() {
           />
         ))}
       </div>
-      <h1>Thank You</h1>
+      <h1>Thank You!</h1>
       <p>Your feedback has been recorded.</p>
     </section>
   );

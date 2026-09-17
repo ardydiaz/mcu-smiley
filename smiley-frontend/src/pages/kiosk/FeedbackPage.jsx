@@ -44,12 +44,12 @@ export default function FeedbackPage() {
     setMessage('');
     try {
       const terminalCode = getKioskTerminalCode();
-      const requiresText = vote.feedbackOption?.requiresText || vote.feedbackOption?.requires_text;
+      const requiresText = vote.feedbackOptions.some(option => option.requiresText || option.requires_text);
       await kioskService.submitVote({
         ratingId: vote.rating.id,
         userTypeId: vote.userType.id,
         terminalCode,
-        feedbackOptionId: vote.feedbackOption.id,
+        feedbackOptionIds: vote.feedbackOptions.map(option => option.id),
         feedback: requiresText ? vote.feedback.trim() : '',
       });
       navigate('/kiosk/thank-you');
@@ -63,13 +63,13 @@ export default function FeedbackPage() {
   function handleSubmit(event) {
     event.preventDefault();
     const terminalCode = getKioskTerminalCode();
-    const requiresText = vote.feedbackOption?.requiresText || vote.feedbackOption?.requires_text;
+    const requiresText = vote.feedbackOptions.some(option => option.requiresText || option.requires_text);
     if (!terminalCode) {
       setMessage('Terminal code is not configured');
       return;
     }
-    if (!vote.feedbackOption) {
-      setMessage('Please select a feedback option');
+    if (!vote.feedbackOptions.length) {
+      setMessage('Please select at least one feedback option');
       return;
     }
     if (requiresText && !vote.feedback.trim()) {
@@ -80,12 +80,16 @@ export default function FeedbackPage() {
   }
 
   function selectOption(option) {
-    const requiresText = option.requiresText || option.requires_text;
-    updateVote({ feedbackOption: option, feedback: requiresText ? vote.feedback : '' });
+    const alreadySelected = vote.feedbackOptions.some(selected => selected.id === option.id);
+    const feedbackOptions = alreadySelected
+      ? vote.feedbackOptions.filter(selected => selected.id !== option.id)
+      : [...vote.feedbackOptions, option];
+    const requiresText = feedbackOptions.some(selected => selected.requiresText || selected.requires_text);
+    updateVote({ feedbackOptions, feedback: requiresText ? vote.feedback : '' });
   }
 
   function goBack() {
-    updateVote({ userType: null, feedbackOption: null, feedback: '' });
+    updateVote({ userType: null, feedbackOptions: [], feedback: '' });
     navigate('/kiosk/user-type');
   }
 
@@ -101,7 +105,7 @@ export default function FeedbackPage() {
       </div>
       <FeedbackForm
         value={vote.feedback}
-        selectedOption={vote.feedbackOption}
+        selectedOptions={vote.feedbackOptions}
         options={options}
         loading={loading}
         optionsLoading={optionsLoading}

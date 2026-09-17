@@ -12,7 +12,7 @@ const fallbackUserTypes = [
   { id: 1, name: 'Student' },
   { id: 2, name: 'Faculty / Employee' },
   { id: 3, name: 'Alumni' },
-  { id: 4, name: 'Others' },
+  { id: 4, name: 'Guest' },
 ];
 
 export default function UserTypePage() {
@@ -26,12 +26,12 @@ export default function UserTypePage() {
   }, [vote.rating, navigate]);
 
   function handleSelect(userType) {
-    updateVote({ userType, feedbackOption: null, feedback: '' });
+    updateVote({ userType, feedbackOptions: [], feedback: '' });
     navigate('/kiosk/feedback');
   }
 
   function goBack() {
-    updateVote({ userType: null, feedbackOption: null, feedback: '' });
+    updateVote({ userType: null, feedbackOptions: [], feedback: '' });
     navigate('/kiosk/smiley');
   }
 
