@@ -1,7 +1,7 @@
 import { pool } from '../config/database.js';
 import { AppError } from '../utils/response.js';
 
-export async function submitVote({ ratingId, userTypeId, terminalCode, feedbackOptionId, feedback = '' }) {
+export async function submitVote({ ratingId, userTypeId, terminalCode, feedbackOptionIds, feedback = '' }) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
@@ -11,15 +11,18 @@ export async function submitVote({ ratingId, userTypeId, terminalCode, feedbackO
       if (!rows.length) throw new AppError(label + ' is unavailable', 400);
     }
 
-    const [feedbackOptionRows] = await connection.execute(
-      "SELECT id, label, requires_text FROM feedback_options WHERE id = ? AND rating_id = ? AND status = 'active' FOR SHARE",
-      [feedbackOptionId, ratingId],
+    const uniqueFeedbackOptionIds = [...new Set(feedbackOptionIds)];
+    const [feedbackOptionRows] = await connection.query(
+      "SELECT id, label, requires_text FROM feedback_options WHERE id IN (?) AND rating_id = ? AND status = 'active' FOR SHARE",
+      [uniqueFeedbackOptionIds, ratingId],
     );
-    if (!feedbackOptionRows.length) throw new AppError('Feedback option is unavailable for this rating', 400);
-    const feedbackOption = feedbackOptionRows[0];
+    if (feedbackOptionRows.length !== uniqueFeedbackOptionIds.length) throw new AppError('Feedback option is unavailable for this rating', 400);
     const customFeedback = feedback.trim();
-    if (feedbackOption.requires_text && !customFeedback) throw new AppError('Feedback is required', 400);
-    const finalFeedback = feedbackOption.requires_text ? customFeedback : feedbackOption.label;
+    const requiresText = feedbackOptionRows.some(option => option.requires_text);
+    if (requiresText && !customFeedback) throw new AppError('Feedback is required', 400);
+    const finalFeedback = requiresText
+      ? customFeedback
+      : feedbackOptionRows.map(option => option.label).sort((a, b) => a.localeCompare(b)).join(', ');
 
     const [terminalRows] = await connection.execute(
       "SELECT t.id, t.location_id FROM terminals t JOIN locations l ON l.id = t.location_id WHERE t.terminal_code = ? AND t.status = 'active' AND l.status = 'active' FOR SHARE",
@@ -36,13 +39,19 @@ export async function submitVote({ ratingId, userTypeId, terminalCode, feedbackO
     const departmentId = departmentRows.length === 1 ? departmentRows[0].department_id : null;
 
     const [result] = await connection.execute(
-      'INSERT INTO votes (rating_id, user_type_id, department_id, location_id, terminal_id, feedback_option_id, feedback) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [ratingId, userTypeId, departmentId, terminal.location_id, terminal.id, feedbackOptionId, finalFeedback],
+      'INSERT INTO votes (rating_id, user_type_id, department_id, location_id, terminal_id, feedback) VALUES (?, ?, ?, ?, ?, ?)',
+      [ratingId, userTypeId, departmentId, terminal.location_id, terminal.id, finalFeedback],
     );
     for (const department of departmentRows) {
       await connection.execute(
         'INSERT IGNORE INTO vote_departments (vote_id, department_id) VALUES (?, ?)',
         [result.insertId, department.department_id],
+      );
+    }
+    for (const feedbackOption of feedbackOptionRows) {
+      await connection.execute(
+        'INSERT IGNORE INTO vote_feedback_options (vote_id, feedback_option_id) VALUES (?, ?)',
+        [result.insertId, feedbackOption.id],
       );
     }
     await connection.commit();

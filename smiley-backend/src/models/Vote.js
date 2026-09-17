@@ -7,6 +7,13 @@ const departmentNamesSelect = `(
   WHERE vd2.vote_id = v.id
 )`;
 
+const feedbackOptionNamesSelect = `(
+  SELECT GROUP_CONCAT(fo2.label ORDER BY fo2.label SEPARATOR ', ')
+  FROM vote_feedback_options vfo2
+  JOIN feedback_options fo2 ON fo2.id = vfo2.feedback_option_id
+  WHERE vfo2.vote_id = v.id
+)`;
+
 const voteDepartmentSource = `(
   SELECT vd.vote_id, vd.department_id
   FROM vote_departments vd
@@ -22,7 +29,7 @@ export function voteFilter({ q, from, to, ratingId, departmentId, userTypeId, lo
   const clauses = [];
   const parameters = [];
   if (q) {
-    clauses.push("(INSTR(LOWER(COALESCE(v.feedback, '')), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(fo.label, '')), LOWER(?)) > 0 OR INSTR(LOWER(r.name), LOWER(?)) > 0 OR INSTR(LOWER(ut.name), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(l.name, '')), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(t.name, '')), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(t.terminal_code, '')), LOWER(?)) > 0 OR EXISTS (SELECT 1 FROM vote_departments vdq JOIN departments dq ON dq.id = vdq.department_id WHERE vdq.vote_id = v.id AND INSTR(LOWER(dq.name), LOWER(?)) > 0) OR INSTR(LOWER(COALESCE(d.name, '')), LOWER(?)) > 0)");
+    clauses.push("(INSTR(LOWER(COALESCE(v.feedback, '')), LOWER(?)) > 0 OR EXISTS (SELECT 1 FROM vote_feedback_options vfoq JOIN feedback_options foq ON foq.id = vfoq.feedback_option_id WHERE vfoq.vote_id = v.id AND INSTR(LOWER(foq.label), LOWER(?)) > 0) OR INSTR(LOWER(r.name), LOWER(?)) > 0 OR INSTR(LOWER(ut.name), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(l.name, '')), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(t.name, '')), LOWER(?)) > 0 OR INSTR(LOWER(COALESCE(t.terminal_code, '')), LOWER(?)) > 0 OR EXISTS (SELECT 1 FROM vote_departments vdq JOIN departments dq ON dq.id = vdq.department_id WHERE vdq.vote_id = v.id AND INSTR(LOWER(dq.name), LOWER(?)) > 0) OR INSTR(LOWER(COALESCE(d.name, '')), LOWER(?)) > 0)");
     parameters.push(q, q, q, q, q, q, q, q, q);
   }
   if (from) { clauses.push('v.created_at >= ?'); parameters.push(from); }
@@ -50,7 +57,8 @@ function appendWhere(where, clause) {
   return where + (where ? ' AND ' : ' WHERE ') + clause;
 }
 
-const joined = ' FROM votes v JOIN ratings r ON r.id = v.rating_id JOIN user_types ut ON ut.id = v.user_type_id LEFT JOIN departments d ON d.id = v.department_id LEFT JOIN locations l ON l.id = v.location_id LEFT JOIN terminals t ON t.id = v.terminal_id LEFT JOIN feedback_options fo ON fo.id = v.feedback_option_id';
+const joined = ' FROM votes v JOIN ratings r ON r.id = v.rating_id JOIN user_types ut ON ut.id = v.user_type_id LEFT JOIN departments d ON d.id = v.department_id LEFT JOIN locations l ON l.id = v.location_id LEFT JOIN terminals t ON t.id = v.terminal_id';
+const joinedWithFeedbackOptions = joined + ' JOIN vote_feedback_options vfo ON vfo.vote_id = v.id JOIN feedback_options fo ON fo.id = vfo.feedback_option_id';
 
 export const Vote = {
   async create({ ratingId, userTypeId, departmentId, locationId, terminalId, feedbackOptionId, feedback }) {
@@ -60,7 +68,7 @@ export const Vote = {
   async list(filters) {
     const { where, parameters } = voteFilter(filters);
     const offset = (filters.page - 1) * filters.limit;
-    const rows = await query('SELECT v.id, v.feedback, v.feedback_option_id, fo.label AS feedback_option, fo.requires_text = 1 AS feedback_requires_text, v.created_at, v.user_type_id, v.location_id, v.terminal_id, r.name AS rating, r.emoji AS rating_emoji, r.value AS score, ut.name AS user_type, COALESCE(' + departmentNamesSelect + ', d.name) AS department, l.name AS location, t.terminal_code, t.name AS terminal' + joined + where + ' ORDER BY v.created_at DESC, v.id DESC LIMIT ? OFFSET ?', [...parameters, String(filters.limit), String(offset)]);
+    const rows = await query('SELECT v.id, v.feedback, ' + feedbackOptionNamesSelect + ' AS feedback_options, v.created_at, v.user_type_id, v.location_id, v.terminal_id, r.name AS rating, r.emoji AS rating_emoji, r.value AS score, ut.name AS user_type, COALESCE(' + departmentNamesSelect + ', d.name) AS department, l.name AS location, t.terminal_code, t.name AS terminal' + joined + where + ' ORDER BY v.created_at DESC, v.id DESC LIMIT ? OFFSET ?', [...parameters, String(filters.limit), String(offset)]);
     const [count] = await query('SELECT COUNT(*) AS total' + joined + where, parameters);
     return { items: rows, total: Number(count.total), page: filters.page, limit: filters.limit };
   },
@@ -74,8 +82,8 @@ export const Vote = {
     const userTypes = await query('SELECT ut.id, ut.name, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY ut.id, ut.name ORDER BY votes DESC, ut.name', parameters);
     const locations = await query('SELECT l.id, COALESCE(l.name, \'No location\') AS name, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY l.id, l.name ORDER BY votes DESC, name', parameters);
     const terminals = await query('SELECT t.id, COALESCE(t.terminal_code, \'No terminal\') AS terminal_code, COALESCE(t.name, \'No terminal\') AS name, COALESCE(l.name, \'\') AS location_name, COUNT(*) AS votes, AVG(r.value) AS averageScore, SUM(r.value >= 4) AS positiveVotes' + joined + where + ' GROUP BY t.id, t.terminal_code, t.name, l.name ORDER BY votes DESC, terminal_code LIMIT 10', parameters);
-    const feedbackOptions = await query('SELECT fo.id, COALESCE(fo.label, \'No selected option\') AS label, r.name AS rating, r.emoji, r.value AS score, COUNT(*) AS votes, AVG(r.value) AS averageScore' + joined + where + ' GROUP BY fo.id, fo.label, r.name, r.emoji, r.value ORDER BY votes DESC, label LIMIT 10', parameters);
-    const issues = await query('SELECT fo.id, COALESCE(fo.label, \'Written feedback only\') AS label, r.name AS rating, r.emoji, r.value AS score, COUNT(*) AS votes' + joined + appendWhere(where, 'r.value <= 3') + ' GROUP BY fo.id, fo.label, r.name, r.emoji, r.value ORDER BY votes DESC, score ASC, label LIMIT 8', parameters);
+    const feedbackOptions = await query('SELECT fo.id, fo.label, r.name AS rating, r.emoji, r.value AS score, COUNT(*) AS votes, AVG(r.value) AS averageScore' + joinedWithFeedbackOptions + where + ' GROUP BY fo.id, fo.label, r.name, r.emoji, r.value ORDER BY votes DESC, label LIMIT 10', parameters);
+    const issues = await query('SELECT fo.id, fo.label, r.name AS rating, r.emoji, r.value AS score, COUNT(*) AS votes' + joinedWithFeedbackOptions + appendWhere(where, 'r.value <= 3') + ' GROUP BY fo.id, fo.label, r.name, r.emoji, r.value ORDER BY votes DESC, score ASC, label LIMIT 8', parameters);
     return {
       totalVotes: Number(summary.totalVotes),
       averageScore: Number(summary.averageScore),

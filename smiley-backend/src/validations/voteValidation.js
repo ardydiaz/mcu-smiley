@@ -4,7 +4,7 @@ export const voteSchema = z.object({
   ratingId: id,
   userTypeId: id,
   terminalCode: z.string().trim().min(1, 'Terminal code is required').max(50),
-  feedbackOptionId: id,
+  feedbackOptionIds: z.array(id).min(1).max(20),
   feedback: z.string().trim().max(2000).default(''),
 }).strict();
 const date = z.iso.date();

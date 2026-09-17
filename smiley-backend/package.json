@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node src/server.js",
+    "predev": "node scripts/free-port.js",
     "dev": "node --watch src/server.js",
     "db:init": "node scripts/init-db.js",
     "db:migrate": "node scripts/migrate.js",

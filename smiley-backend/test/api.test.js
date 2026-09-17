@@ -148,11 +148,13 @@ test('validation bounds IDs, feedback, pagination and date ranges', () => {
   assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1 }).success, false);
   assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: '', feedback: 'Helpful staff' }).success, false);
   assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedback: 'Helpful staff' }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, feedback: 'x'.repeat(2001) }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1 }).success, true);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, feedback: 'Helpful staff' }).success, true);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, departmentId: 1, feedback: 'Helpful staff' }).success, false);
-  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 1, feedback: 'Helpful staff', admin: true }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [1], feedback: 'x'.repeat(2001) }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [1] }).success, true);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [1, 2] }).success, true);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [], feedback: 'Helpful staff' }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [1], feedback: 'Helpful staff' }).success, true);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [1], departmentId: 1, feedback: 'Helpful staff' }).success, false);
+  assert.equal(voteSchema.safeParse({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [1], feedback: 'Helpful staff', admin: true }).success, false);
   assert.equal(filterSchema.safeParse({ from: '2026-02-30' }).success, false);
   assert.equal(filterSchema.safeParse({ from: '2026-09-02', to: '2026-09-01' }).success, false);
   assert.equal(filterSchema.safeParse({ q: 'PGT', ratingId: '1' }).success, true);
@@ -331,14 +333,21 @@ test('vote submission commits valid votes and rolls back unavailable choices', a
   let available = true;
   pool.getConnection = async () => ({
     beginTransaction: async () => calls.push('begin'),
+    query: async (sql, params) => {
+      if (sql.includes('FROM feedback_options')) return [[{ id: 5, label: 'Timely assistance', requires_text: 0 }]];
+      return [{}];
+    },
     execute: async (sql, params) => {
       if (sql.includes('FROM ratings') || sql.includes('FROM user_types')) return [available ? [{ id: 1 }] : []];
-      if (sql.includes('FROM feedback_options')) return [[{ id: 5, label: 'Timely assistance', requires_text: 0 }]];
       if (sql.includes('FROM terminals')) return [[{ id: 9, location_id: 3 }]];
       if (sql.includes('FROM terminal_departments')) return [[{ department_id: 4 }, { department_id: 7 }]];
       if (sql.startsWith('INSERT INTO votes')) return [{ insertId: 42 }];
       if (sql.startsWith('INSERT IGNORE INTO vote_departments')) {
         calls.push('vote_department:' + params[1]);
+        return [{}];
+      }
+      if (sql.startsWith('INSERT IGNORE INTO vote_feedback_options')) {
+        calls.push('vote_feedback_option:' + params[1]);
         return [{}];
       }
       return [{}];
@@ -348,11 +357,11 @@ test('vote submission commits valid votes and rolls back unavailable choices', a
     release: () => calls.push('release'),
   });
   try {
-    assert.deepEqual(await submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 5, feedback: 'Helpful staff' }), { id: 42 });
-    assert.deepEqual(calls, ['begin', 'vote_department:4', 'vote_department:7', 'commit', 'release']);
+    assert.deepEqual(await submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [5], feedback: 'Helpful staff' }), { id: 42 });
+    assert.deepEqual(calls, ['begin', 'vote_department:4', 'vote_department:7', 'vote_feedback_option:5', 'commit', 'release']);
     calls.length = 0;
     available = false;
-    await assert.rejects(submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionId: 5, feedback: 'Helpful staff' }), /Rating is unavailable/);
+    await assert.rejects(submitVote({ ratingId: 1, userTypeId: 1, terminalCode: 'Tablet-01', feedbackOptionIds: [5], feedback: 'Helpful staff' }), /Rating is unavailable/);
     assert.deepEqual(calls, ['begin', 'rollback', 'release']);
   } finally { pool.getConnection = original; }
 });

@@ -6,7 +6,7 @@ export const openApiDocument = {
     description: 'API documentation for the Smiley Face voting backend.',
   },
   servers: [
-    { url: 'http://localhost:3000/api', description: 'Local backend' },
+    { url: 'http://localhost:4100/api', description: 'Local backend' },
   ],
   tags: [
     { name: 'Health' },
