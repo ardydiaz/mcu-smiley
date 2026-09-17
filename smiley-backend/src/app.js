@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import { rateLimit } from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env.js';
 import { query } from './config/database.js';
+import { downloadTeamsDigestExcel } from './controllers/teamsDigestController.js';
 import authRoutes from './routes/authRoutes.js';
 import ratingRoutes from './routes/ratingRoutes.js';
 import feedbackOptionRoutes from './routes/feedbackOptionRoutes.js';
@@ -35,6 +37,8 @@ app.get('/api/ready', async (req, res) => {
   try { await query('SELECT 1'); res.json({ success: true, data: { status: 'ready' } }); }
   catch { res.status(503).json({ success: false, message: 'Database unavailable' }); }
 });
+// Public: opened directly from the Teams digest card via a signed, short-lived token (no login).
+app.get('/api/public/teams-digest/report.xlsx', rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeaders: 'draft-8', legacyHeaders: false }), downloadTeamsDigestExcel);
 app.use('/api/auth', authRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/feedback-options', feedbackOptionRoutes);

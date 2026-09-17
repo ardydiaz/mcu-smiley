@@ -2,10 +2,12 @@ import app from './app.js';
 import { env } from './config/env.js';
 import { pool } from './config/database.js';
 import { logger } from './utils/logger.js';
+import { startTeamsDigestJob } from './jobs/teamsDigestJob.js';
 
 try {
   await pool.query('SELECT 1');
   const server = app.listen(env.PORT, () => logger.info('Smiley API listening on port ' + env.PORT));
+  startTeamsDigestJob();
   server.on('error', async error => {
     logger.error('Server failed: ' + error.code);
     await pool.end();

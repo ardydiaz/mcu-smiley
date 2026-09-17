@@ -942,5 +942,37 @@ export const openApiDocument = {
         },
       },
     },
+    '/reports/teams-digest/send': {
+      post: {
+        tags: ['Reports'],
+        summary: 'Manually trigger the daily sad-votes Microsoft Teams digest',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: { description: 'Digest sent (or skipped if no webhook is configured)' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
+      },
+    },
+    '/public/teams-digest/report.xlsx': {
+      get: {
+        tags: ['Reports'],
+        summary: 'Download the sad-votes Excel report for a given day (no login; signed token from the Teams digest card)',
+        parameters: [
+          { name: 'token', in: 'query', required: true, schema: { type: 'string' }, description: 'Signed, short-lived token embedded in the Teams digest download link' },
+        ],
+        responses: {
+          200: {
+            description: 'Excel file',
+            content: {
+              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+                schema: { type: 'string', format: 'binary' },
+              },
+            },
+          },
+          401: { description: 'Invalid or expired download link' },
+        },
+      },
+    },
   },
 };

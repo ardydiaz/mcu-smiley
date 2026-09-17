@@ -35,6 +35,10 @@ const schema = z.object({
   AZURE_CLIENT_SECRET: optionalString,
   AZURE_TENANT_ID: optionalString,
   AZURE_REDIRECT_URI: optionalUrl,
+  TEAMS_SMILEY_WEBHOOK_URL: optionalUrl,
+  TEAMS_DIGEST_CRON: z.string().default('45 14 * * *'),
+  TEAMS_DIGEST_TIMEZONE: z.string().default('Asia/Manila'),
+  PUBLIC_API_BASE_URL: optionalUrl,
 });
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
