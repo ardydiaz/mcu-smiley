@@ -1,14 +1,17 @@
+import { Briefcase, GraduationCap, Handshake, User } from 'lucide-react';
+
 const icons = {
-  Student: String.fromCodePoint(0x1f393),
-  'Faculty / Employee': String.fromCodePoint(0x1f4bc),
-  Alumni: String.fromCodePoint(0x1f91d),
-  Others: String.fromCodePoint(0x2728),
+  Guest: User,
+  Student: GraduationCap,
+  'Faculty / Employee': Briefcase,
+  Alumni: Handshake,
 };
 
 export default function UserTypeCard({ userType, onSelect }) {
+  const Icon = icons[userType.name] || User;
   return (
     <button className="user-type-choice" type="button" onClick={() => onSelect(userType)}>
-      <span className="user-type-choice-icon" aria-hidden="true">{icons[userType.name] || String.fromCodePoint(0x1f464)}</span>
+      <span className="user-type-choice-icon" aria-hidden="true"><Icon /></span>
       <strong>{userType.name}</strong>
     </button>
   );
