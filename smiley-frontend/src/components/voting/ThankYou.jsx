@@ -1,4 +1,4 @@
-const confettiColors = ['#14b8a6', '#60a5fa', '#f59e0b', '#ef4444', '#a855f7', '#84cc16', '#ec4899'];
+const confettiColors = ['#ffb736', '#ffd62e', '#fdc131', '#712c83', '#5c297c', '#ffffff'];
 const confettiShapes = ['circle', 'square', 'triangle'];
 
 const confettiPieces = Array.from({ length: 96 }, (_, index) => {

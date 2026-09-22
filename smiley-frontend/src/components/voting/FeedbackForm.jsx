@@ -24,8 +24,10 @@ export default function FeedbackForm({ value, selectedOptions = [], options = []
                   onClick={() => onOptionSelect(option)}
                   aria-pressed={active}
                 >
-                  <span>{option.label}</span>
-                  {active ? <Check className="feedback-option-check" aria-hidden="true" /> : null}
+                  <span className={'feedback-option-indicator' + (active ? ' active' : '')} aria-hidden="true">
+                    {active ? <Check size={14} /> : null}
+                  </span>
+                  <span className="feedback-option-label">{option.label}</span>
                   {option.requiresText || option.requires_text ? <small>Specify</small> : null}
                 </button>
               );
