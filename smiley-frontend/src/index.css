@@ -638,7 +638,18 @@ a {
 
 .field label {
   font-weight: 700;
+  color: #21112c;
+}
+
+.kiosk-shell .field label {
   color: #fff;
+}
+
+/* Fields inside a white card (e.g. the tablet-setup panel) need dark
+   text even inside the kiosk's dark shell - only fields sitting directly
+   on the dark page background should get white label text. */
+.kiosk-shell .setup-card .field label {
+  color: #21112c;
 }
 
 .field input,
