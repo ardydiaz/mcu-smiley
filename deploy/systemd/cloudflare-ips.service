@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh Cloudflare IP ranges (nginx real_ip + ufw)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/smiley-update-cloudflare-ips

@@ -1,0 +1,10 @@
+[Unit]
+Description=MCU Smiley MySQL backup
+After=mysql.service
+Requires=mysql.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/smiley-backup-db
+Nice=10
+IOSchedulingClass=idle
