@@ -31,6 +31,10 @@ export const terminalService = {
     const response = await apiRequest('/terminals/' + id, { method: 'DELETE' });
     return response.data;
   },
+  async releaseReservation(id) {
+    const response = await apiRequest('/terminals/' + id + '/release-reservation', { method: 'POST' });
+    return response.data;
+  },
   async listAvailableForKiosk(deviceId) {
     const response = await apiRequest('/kiosk/terminals/available' + buildQuery({ deviceId }), { auth: 'none' });
     return response.data;

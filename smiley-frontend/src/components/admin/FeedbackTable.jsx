@@ -77,6 +77,7 @@ export default function FeedbackTable({ items = [] }) {
               </div>
             </div>
 
+            <div className="feedback-modal-message-label">Feedback message</div>
             <div className="feedback-modal-message">
               {selectedFeedback.feedback || 'No feedback message'}
             </div>
@@ -85,8 +86,9 @@ export default function FeedbackTable({ items = [] }) {
               <DetailItem label="User Type">{selectedFeedback.user_type}</DetailItem>
               <DetailItem label="Department">{selectedFeedback.department}</DetailItem>
               <DetailItem label="Location">{selectedFeedback.location}</DetailItem>
-              <DetailItem label="Tablet Code">{selectedFeedback.terminal_code}</DetailItem>
-              <DetailItem label="Tablet Name">{selectedFeedback.terminal}</DetailItem>
+              <DetailItem label="Tablet">
+                {[selectedFeedback.terminal_code, selectedFeedback.terminal].filter(Boolean).join(' - ')}
+              </DetailItem>
             </div>
           </div>
         </Modal>

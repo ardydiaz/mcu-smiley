@@ -165,6 +165,16 @@ export const TerminalKioskSession = {
     return this.findActiveByDevice(deviceId);
   },
 
+  async releaseByTerminalId(terminalId) {
+    const result = await query(
+      `UPDATE terminal_kiosk_sessions
+       SET status = 'released', released_at = UTC_TIMESTAMP()
+       WHERE terminal_id = ? AND status = 'active'`,
+      [terminalId],
+    );
+    return result.affectedRows || 0;
+  },
+
   async release({ deviceId, terminalCode }) {
     const parameters = [normalizeDeviceId(deviceId)];
     let terminalJoin = '';

@@ -1541,6 +1541,15 @@ th {
   box-shadow: inset 0 0 0 1px rgba(92, 41, 124, 0.12), 0 10px 22px rgba(15, 23, 42, 0.08);
 }
 
+.feedback-modal-message-label {
+  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: -0.5rem;
+}
+
 .feedback-modal-message {
   max-height: min(42vh, 420px);
   overflow: auto;
@@ -2765,7 +2774,6 @@ body {
 
 .kiosk-heading p,
 .field-hint,
-.terminal-cell span,
 .feedback-results-header,
 .data-table-summary,
 .empty-state,

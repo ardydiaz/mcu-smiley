@@ -1,4 +1,4 @@
-import { CheckCircle, Edit2, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
+import { CheckCircle, Edit2, Plus, RefreshCw, Save, Trash2, Unplug, X } from 'lucide-react';
 import { useState } from 'react';
 import Button from '../../components/common/Button.jsx';
 import { DataTablePagination, DataTableSummary, DataTableToolbar } from '../../components/admin/DataTableControls.jsx';
@@ -9,6 +9,7 @@ import { locationService } from '../../services/locationService.js';
 import { terminalService } from '../../services/terminalService.js';
 import { useApi } from '../../hooks/useApi.js';
 import { useDataTable } from '../../hooks/useDataTable.js';
+import { formatDateTime } from '../../utils/helpers.js';
 
 const emptyForm = { locationId: '', terminalCode: '', name: '', status: 'active' };
 
@@ -145,6 +146,17 @@ export default function TerminalsPage() {
     }
   }
 
+  async function releaseReservation(terminal) {
+    setMessage('');
+    try {
+      const result = await terminalService.releaseReservation(terminal.id);
+      await reload();
+      setMessage(result.released ? 'Kiosk reservation released - the tablet will need to reselect this terminal' : 'Terminal was not reserved');
+    } catch (err) {
+      setMessage(err.message || 'Unable to release reservation');
+    }
+  }
+
   function refreshAll() {
     reload();
     reloadLocations();
@@ -187,6 +199,7 @@ export default function TerminalsPage() {
                 <th>Code</th>
                 <th>Name</th>
                 <th>Status</th>
+                <th>Kiosk</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -198,8 +211,21 @@ export default function TerminalsPage() {
                   <td>{terminal.name}</td>
                   <td>{terminal.status}</td>
                   <td>
+                    {terminal.reserved_by_device_id ? (
+                      <div className="terminal-cell">
+                        <span className="status-badge status-pending">Reserved</span>
+                        <span>Last seen {formatDateTime(terminal.reserved_last_seen_at)}</span>
+                      </div>
+                    ) : (
+                      <span className="status-badge status-active">Available</span>
+                    )}
+                  </td>
+                  <td>
                     <div className="button-row table-action-row">
                       <Button variant="secondary" icon={Edit2} iconOnly aria-label="Edit terminal" onClick={() => startEdit(terminal)}>Edit</Button>
+                      {terminal.reserved_by_device_id ? (
+                        <Button variant="secondary" icon={Unplug} iconOnly aria-label="Release kiosk reservation" onClick={() => releaseReservation(terminal)}>Release</Button>
+                      ) : null}
                       {terminal.status === 'inactive' ? (
                         <Button variant="primary" icon={CheckCircle} iconOnly aria-label="Activate terminal" onClick={() => setTerminalStatus(terminal, 'active')}>Activate</Button>
                       ) : (

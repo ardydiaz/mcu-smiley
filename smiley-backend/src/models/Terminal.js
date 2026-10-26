@@ -8,7 +8,15 @@ export const Terminal = {
       parameters.push(locationId);
     }
     if (!includeInactive) clauses.push("t.status = 'active'");
-    return query('SELECT t.*, l.name AS location_name, t.status = \'active\' AS active FROM terminals t JOIN locations l ON l.id = t.location_id' + (clauses.length ? ' WHERE ' + clauses.join(' AND ') : '') + ' ORDER BY l.name, t.name', parameters);
+    return query(
+      `SELECT t.*, l.name AS location_name, t.status = 'active' AS active,
+         s.device_id AS reserved_by_device_id, s.last_seen_at AS reserved_last_seen_at
+       FROM terminals t
+       JOIN locations l ON l.id = t.location_id
+       LEFT JOIN terminal_kiosk_sessions s ON s.terminal_id = t.id AND s.status = 'active'`
+      + (clauses.length ? ' WHERE ' + clauses.join(' AND ') : '') + ' ORDER BY l.name, t.name',
+      parameters,
+    );
   },
   async findById(id) { return (await query("SELECT t.*, l.name AS location_name, t.status = 'active' AS active FROM terminals t JOIN locations l ON l.id = t.location_id WHERE t.id = ?", [id]))[0]; },
   async findDuplicateFields({ terminalCode, name }, excludeId) {

@@ -727,6 +727,21 @@ export const openApiDocument = {
         },
       },
     },
+    '/terminals/{id}/release-reservation': {
+      post: {
+        tags: ['Terminals'],
+        summary: "Force-release a terminal's active kiosk reservation",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ $ref: '#/components/parameters/IdParam' }],
+        responses: {
+          200: { description: 'Reservation released (or terminal was not reserved)' },
+          400: { $ref: '#/components/responses/ValidationFailed' },
+          401: { $ref: '#/components/responses/Unauthorized' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { description: 'Terminal not found' },
+        },
+      },
+    },
     '/terminal-departments': {
       get: {
         tags: ['Terminal Departments'],

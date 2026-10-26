@@ -1,4 +1,6 @@
 import { Terminal } from '../models/Terminal.js';
+import { TerminalKioskSession } from '../models/TerminalKioskSession.js';
+import { broadcastKioskTerminalEvent } from '../services/kioskTerminalEvents.js';
 import { success, AppError } from '../utils/response.js';
 
 async function validateDuplicateTerminalFields(body, res, excludeId) {
@@ -40,4 +42,19 @@ export async function deleteTerminal(req, res) {
   if (!await Terminal.findById(id)) throw new AppError('Terminal not found', 404);
   await Terminal.deactivate(id);
   return success(res, null, 'Terminal deactivated');
+}
+
+export async function releaseTerminalReservation(req, res) {
+  const { id } = req.validated.params;
+  const terminal = await Terminal.findById(id);
+  if (!terminal) throw new AppError('Terminal not found', 404);
+  const released = await TerminalKioskSession.releaseByTerminalId(id);
+  if (released) {
+    broadcastKioskTerminalEvent('terminal-reservations-changed', {
+      action: 'released',
+      terminalCode: terminal.terminal_code,
+      deviceId: null,
+    });
+  }
+  return success(res, { released: Boolean(released) }, released ? 'Reservation released' : 'Terminal was not reserved');
 }
