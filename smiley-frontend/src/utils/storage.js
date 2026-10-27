@@ -41,6 +41,7 @@ function normalizeKioskTerminal(terminal) {
     terminalCode,
     name: terminal.name || terminalCode,
     locationName: terminal.locationName || terminal.location_name || '',
+    departmentNames: terminal.departmentNames || terminal.department_names || '',
   };
 }
 
@@ -66,6 +67,7 @@ export function getKioskTerminal() {
     terminalCode: envTerminalCode,
     name: envTerminalCode,
     locationName: '',
+    departmentNames: '',
   } : null);
 }
 

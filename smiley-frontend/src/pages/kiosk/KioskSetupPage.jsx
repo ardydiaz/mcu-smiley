@@ -1,4 +1,4 @@
-import { CheckCircle2, MapPin, Monitor, RefreshCcw, Trash2 } from 'lucide-react';
+import { Building2, Check, CheckCircle2, MapPin, Monitor, RefreshCcw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/common/Button.jsx';
@@ -19,6 +19,7 @@ export default function KioskSetupPage() {
   const deviceId = getKioskDeviceId();
   const currentTerminal = getKioskTerminal();
   const [selectedCode, setSelectedCode] = useState(currentTerminal?.terminalCode || '');
+  const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const { data, loading, error, reload } = useApi(() => terminalService.listAvailableForKiosk(deviceId), [deviceId]);
@@ -27,6 +28,16 @@ export default function KioskSetupPage() {
     () => terminals.find(terminal => terminal.terminal_code === selectedCode),
     [terminals, selectedCode],
   );
+  const filteredTerminals = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return terminals;
+    return terminals.filter(terminal => [
+      terminal.terminal_code,
+      terminal.name,
+      terminal.location_name,
+      terminal.department_names,
+    ].filter(Boolean).join(' ').toLowerCase().includes(term));
+  }, [terminals, searchTerm]);
 
   useEffect(() => {
     const events = new EventSource(terminalService.kioskEventsUrl());
@@ -84,35 +95,59 @@ export default function KioskSetupPage() {
             <div>
               <strong>Current tablet: {currentTerminal.terminalCode}</strong>
               <span>{currentTerminal.name}{currentTerminal.locationName ? ' - ' + currentTerminal.locationName : ''}</span>
+              <span>{currentTerminal.departmentNames ? 'Department: ' + currentTerminal.departmentNames : 'No department assigned'}</span>
             </div>
           </div>
         ) : null}
 
-        <div className={'setup-form-row' + (selectedTerminal ? ' has-preview' : '')}>
-          <div className="field setup-terminal-field">
-            <label htmlFor="kiosk-terminal">Terminal</label>
-            <select
-              id="kiosk-terminal"
-              value={selectedCode}
-              onChange={event => setSelectedCode(event.target.value)}
-              disabled={loading || saving}
-            >
-              <option value="">Select terminal</option>
-              {terminals.map(terminal => (
-                <option key={terminal.id} value={terminal.terminal_code}>
-                  {terminal.terminal_code} - {terminal.name}{terminal.location_name ? ' - ' + terminal.location_name : ''}
-                </option>
-              ))}
-            </select>
-            <p className="field-hint">This setting is saved only in this tablet browser.</p>
-          </div>
+        <div className="field setup-terminal-field">
+          <label htmlFor="kiosk-terminal-search">Terminal</label>
+          <div className="department-picker terminal-picker">
+            <label className="department-search" htmlFor="kiosk-terminal-search">
+              <Search size={18} aria-hidden="true" />
+              <input
+                id="kiosk-terminal-search"
+                value={searchTerm}
+                onChange={event => setSearchTerm(event.target.value)}
+                placeholder="Search by tablet code, location, or department..."
+                disabled={loading || saving}
+              />
+            </label>
 
-          {selectedTerminal ? (
-            <div className="terminal-preview">
-              <span><Monitor size={18} aria-hidden="true" /> {selectedTerminal.name}</span>
-              <span><MapPin size={18} aria-hidden="true" /> {selectedTerminal.location_name || 'No location name'}</span>
-            </div>
-          ) : null}
+            {!loading && filteredTerminals.length ? (
+              <div className="terminal-picker-list">
+                <div className="department-grid">
+                  {filteredTerminals.map(terminal => {
+                    const isSelected = terminal.terminal_code === selectedCode;
+                    return (
+                      <button
+                        type="button"
+                        key={terminal.id}
+                        className={'department-card' + (isSelected ? ' is-selected' : '')}
+                        onClick={() => setSelectedCode(terminal.terminal_code)}
+                        disabled={saving}
+                        aria-pressed={isSelected}
+                      >
+                        <span className="department-icon" aria-hidden="true"><Monitor size={22} /></span>
+                        <span className="department-copy">
+                          <strong>{terminal.terminal_code}</strong>
+                          <span>{terminal.name}</span>
+                          <span className="terminal-card-meta"><MapPin size={14} aria-hidden="true" /> {terminal.location_name || 'No location'}</span>
+                          <span className="terminal-card-meta"><Building2 size={14} aria-hidden="true" /> {terminal.department_names || 'No department assigned'}</span>
+                        </span>
+                        <span className="department-arrow" aria-hidden="true">{isSelected ? <Check size={16} /> : '→'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {!loading && terminals.length && !filteredTerminals.length ? (
+              <div className="empty-state">No terminals match your search.</div>
+            ) : null}
+          </div>
+          <p className="field-hint">This setting is saved only in this tablet browser.</p>
         </div>
 
         {loading ? <Loading label="Loading available terminals" /> : null}
