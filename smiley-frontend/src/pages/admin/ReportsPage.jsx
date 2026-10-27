@@ -5,6 +5,7 @@ import { departmentService } from '../../services/departmentService.js';
 import { locationService } from '../../services/locationService.js';
 import { ratingService } from '../../services/ratingService.js';
 import { reportService } from '../../services/reportService.js';
+import { terminalDepartmentService } from '../../services/terminalDepartmentService.js';
 import { terminalService } from '../../services/terminalService.js';
 import { userTypeService } from '../../services/userTypeService.js';
 
@@ -42,6 +43,7 @@ export default function ReportsPage() {
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [total, setTotal] = useState(0);
   const [options, setOptions] = useState({ ratings: [], userTypes: [], departments: [], locations: [], terminals: [] });
+  const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
@@ -56,14 +58,18 @@ export default function ReportsPage() {
     async function loadOptions() {
       setOptionsLoading(true);
       try {
-        const [ratings, userTypes, departments, locations, terminals] = await Promise.all([
+        const [ratings, userTypes, departments, locations, terminals, terminalDepartments] = await Promise.all([
           ratingService.list(),
           userTypeService.list(),
           departmentService.list(),
           locationService.list(),
           terminalService.listAll(),
+          terminalDepartmentService.list(),
         ]);
-        if (alive) setOptions({ ratings, userTypes, departments, locations, terminals });
+        if (alive) {
+          setOptions({ ratings, userTypes, departments, locations, terminals });
+          setAssignments(terminalDepartments);
+        }
       } catch {
         if (alive) setOptions(current => current);
       } finally {
@@ -92,8 +98,64 @@ export default function ReportsPage() {
     return () => { alive = false; };
   }, [appliedFilters]);
 
+  const filteredTerminals = useMemo(() => {
+    if (!filters.locationId) return options.terminals;
+    return options.terminals.filter(terminal => String(terminal.location_id) === String(filters.locationId));
+  }, [options.terminals, filters.locationId]);
+
+  const filteredDepartments = useMemo(() => {
+    let terminalIds = null;
+    if (filters.terminalId) {
+      terminalIds = new Set([String(filters.terminalId)]);
+    } else if (filters.locationId) {
+      terminalIds = new Set(
+        options.terminals.filter(terminal => String(terminal.location_id) === String(filters.locationId)).map(terminal => String(terminal.id)),
+      );
+    }
+    if (!terminalIds) return options.departments;
+    const allowedDepartmentIds = new Set(
+      assignments.filter(assignment => terminalIds.has(String(assignment.terminal_id))).map(assignment => String(assignment.department_id)),
+    );
+    return options.departments.filter(department => allowedDepartmentIds.has(String(department.id)));
+  }, [options.departments, options.terminals, assignments, filters.terminalId, filters.locationId]);
+
   function updateFilter(name, value) {
-    setFilters(current => ({ ...current, [name]: value }));
+    setFilters(current => {
+      const next = { ...current, [name]: value };
+
+      if (name === 'locationId') {
+        const selectedTerminal = options.terminals.find(terminal => String(terminal.id) === String(current.terminalId));
+        if (selectedTerminal && String(selectedTerminal.location_id) !== String(value)) next.terminalId = '';
+      }
+
+      if (name === 'terminalId' && value) {
+        const selectedTerminal = options.terminals.find(terminal => String(terminal.id) === String(value));
+        if (selectedTerminal) next.locationId = String(selectedTerminal.location_id);
+      }
+
+      if (name === 'locationId' || name === 'terminalId') {
+        let terminalIds = null;
+        if (next.terminalId) {
+          terminalIds = new Set([String(next.terminalId)]);
+        } else if (next.locationId) {
+          terminalIds = new Set(
+            options.terminals.filter(terminal => String(terminal.location_id) === String(next.locationId)).map(terminal => String(terminal.id)),
+          );
+        }
+        if (terminalIds) {
+          const allowedDepartmentIds = [
+            ...new Set(assignments.filter(assignment => terminalIds.has(String(assignment.terminal_id))).map(assignment => String(assignment.department_id))),
+          ];
+          if (name === 'terminalId' && allowedDepartmentIds.length === 1) {
+            next.departmentId = allowedDepartmentIds[0];
+          } else if (next.departmentId && !allowedDepartmentIds.includes(String(next.departmentId))) {
+            next.departmentId = '';
+          }
+        }
+      }
+
+      return next;
+    });
   }
 
   function runReport(event) {
@@ -166,10 +228,10 @@ export default function ReportsPage() {
               </select>
             </div>
             <div className="field compact-field">
-              <label htmlFor="departmentId">Department</label>
-              <select id="departmentId" value={filters.departmentId} onChange={event => updateFilter('departmentId', event.target.value)} disabled={optionsLoading}>
-                <option value="">All departments</option>
-                {options.departments.map(department => <option key={department.id} value={department.id}>{department.name}</option>)}
+              <label htmlFor="terminalId">Tablet</label>
+              <select id="terminalId" value={filters.terminalId} onChange={event => updateFilter('terminalId', event.target.value)} disabled={optionsLoading}>
+                <option value="">All tablets</option>
+                {filteredTerminals.map(terminal => <option key={terminal.id} value={terminal.id}>{terminal.terminal_code} - {terminal.name}</option>)}
               </select>
             </div>
             <div className="field compact-field">
@@ -180,10 +242,10 @@ export default function ReportsPage() {
               </select>
             </div>
             <div className="field compact-field">
-              <label htmlFor="terminalId">Tablet</label>
-              <select id="terminalId" value={filters.terminalId} onChange={event => updateFilter('terminalId', event.target.value)} disabled={optionsLoading}>
-                <option value="">All tablets</option>
-                {options.terminals.map(terminal => <option key={terminal.id} value={terminal.id}>{terminal.terminal_code} - {terminal.name}</option>)}
+              <label htmlFor="departmentId">Department</label>
+              <select id="departmentId" value={filters.departmentId} onChange={event => updateFilter('departmentId', event.target.value)} disabled={optionsLoading}>
+                <option value="">All departments</option>
+                {filteredDepartments.map(department => <option key={department.id} value={department.id}>{department.name}</option>)}
               </select>
             </div>
           </div>
