@@ -19,9 +19,9 @@ export const Terminal = {
     );
   },
   async findById(id) { return (await query("SELECT t.*, l.name AS location_name, t.status = 'active' AS active FROM terminals t JOIN locations l ON l.id = t.location_id WHERE t.id = ?", [id]))[0]; },
-  async findDuplicateFields({ terminalCode, name }, excludeId) {
-    const parameters = [terminalCode, name];
-    let sql = 'SELECT terminal_code, name FROM terminals WHERE (terminal_code = ? OR name = ?)';
+  async findDuplicateFields({ terminalCode }, excludeId) {
+    const parameters = [terminalCode];
+    let sql = 'SELECT terminal_code FROM terminals WHERE terminal_code = ?';
     if (excludeId) {
       sql += ' AND id <> ?';
       parameters.push(excludeId);

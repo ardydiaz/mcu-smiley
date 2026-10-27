@@ -258,7 +258,7 @@ test('duplicate location names return field validation errors', async () => {
   }
 });
 
-test('duplicate terminal code and name return field validation errors', async () => {
+test('duplicate terminal code returns a field validation error, but duplicate names are allowed', async () => {
   const originalFindDuplicateFields = Terminal.findDuplicateFields;
   const originalFindById = Terminal.findById;
   const originalCreate = Terminal.create;
@@ -276,10 +276,7 @@ test('duplicate terminal code and name return field validation errors', async ()
   };
 
   try {
-    Terminal.findDuplicateFields = async () => [
-      { terminal_code: 'Tablet-01', name: 'Different name' },
-      { terminal_code: 'Tablet-99', name: 'LRC Ground Floor Table - 01' },
-    ];
+    Terminal.findDuplicateFields = async () => [{ terminal_code: 'Tablet-01' }];
     Terminal.findById = async () => ({ id: 2 });
     Terminal.create = async () => { throw new Error('create should not run'); };
     Terminal.update = async () => { throw new Error('update should not run'); };
@@ -291,11 +288,9 @@ test('duplicate terminal code and name return field validation errors', async ()
     assert.deepEqual(responses, [
       { code: 400, payload: { success: false, message: 'Validation failed', errors: [
         { field: 'terminalCode', message: 'Terminal code already exists' },
-        { field: 'name', message: 'Terminal name already exists' },
       ] } },
       { code: 400, payload: { success: false, message: 'Validation failed', errors: [
         { field: 'terminalCode', message: 'Terminal code already exists' },
-        { field: 'name', message: 'Terminal name already exists' },
       ] } },
     ]);
   } finally {

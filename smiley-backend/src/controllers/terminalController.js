@@ -9,9 +9,6 @@ async function validateDuplicateTerminalFields(body, res, excludeId) {
   if (duplicates.some(row => row.terminal_code === body.terminalCode)) {
     errors.push({ field: 'terminalCode', message: 'Terminal code already exists' });
   }
-  if (duplicates.some(row => row.name === body.name)) {
-    errors.push({ field: 'name', message: 'Terminal name already exists' });
-  }
   if (!errors.length) return false;
   res.status(400).json({ success: false, message: 'Validation failed', errors });
   return true;
