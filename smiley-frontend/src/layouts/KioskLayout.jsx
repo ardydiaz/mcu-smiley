@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { ApiError } from '../services/api.js';
 import { terminalService } from '../services/terminalService.js';
 import { clearKioskTerminal, getKioskDeviceId, getKioskTerminal } from '../utils/storage.js';
 
@@ -15,9 +16,14 @@ export default function KioskLayout() {
     async function heartbeat() {
       try {
         await terminalService.heartbeatForKiosk({ terminalCode: terminal.terminalCode, deviceId });
-      } catch {
-        clearKioskTerminal();
-        navigate('/kiosk/setup?next=' + encodeURIComponent(location.pathname + location.search), { replace: true });
+      } catch (error) {
+        // Only a real rejection from the server means the reservation is actually gone.
+        // A network/offline failure throws before a response is ever received, so it
+        // must not wipe the tablet's saved terminal - just retry on the next heartbeat.
+        if (error instanceof ApiError) {
+          clearKioskTerminal();
+          navigate('/kiosk/setup?next=' + encodeURIComponent(location.pathname + location.search), { replace: true });
+        }
       }
     }
 
