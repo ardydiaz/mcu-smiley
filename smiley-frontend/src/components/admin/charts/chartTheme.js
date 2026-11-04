@@ -24,6 +24,21 @@ export const TEXT_MUTED = '#64748b';
 export const GRID_COLOR = '#e5def0';
 export const FONT_FAMILY = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
+// Full `chart` object (not just `events`) because baseChartOptions' final
+// `...overrides` spread replaces `chart` wholesale rather than deep-merging it.
+export function clickableChartConfig(onSelect) {
+  return {
+    fontFamily: FONT_FAMILY,
+    toolbar: { show: false },
+    zoom: { enabled: false },
+    foreColor: TEXT_MUTED,
+    animations: { speed: 280 },
+    events: {
+      dataPointSelection: (event, chartContext, config) => onSelect(config.dataPointIndex),
+    },
+  };
+}
+
 export function baseChartOptions(overrides = {}) {
   return {
     chart: {

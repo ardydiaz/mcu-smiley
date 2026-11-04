@@ -9,6 +9,7 @@ import {
   TEXT_MUTED,
   TEXT_PRIMARY,
   baseChartOptions,
+  clickableChartConfig,
 } from './chartTheme.js';
 
 function formatShortDate(value) {
@@ -19,7 +20,7 @@ function barHeight(rowCount, perRow = 42, min = 200, max = 420) {
   return Math.min(max, Math.max(min, 72 + rowCount * perRow));
 }
 
-export function ResponseTrendChart({ rows = [] }) {
+export function ResponseTrendChart({ rows = [], onSelect }) {
   const normalizedRows = rows.slice(-14);
   if (!normalizedRows.length) return <div className="empty-state">No trend data yet.</div>;
 
@@ -36,6 +37,7 @@ export function ResponseTrendChart({ rows = [] }) {
     axisBorder: { show: false },
     axisTicks: { show: false },
   };
+  const handleSelect = onSelect ? index => onSelect(normalizedRows[index]) : null;
 
   return (
     <div className="dashboard-trend-charts">
@@ -55,6 +57,7 @@ export function ResponseTrendChart({ rows = [] }) {
             xaxis: sharedXAxis,
             yaxis: { labels: { style: { colors: TEXT_MUTED, fontSize: '11px' } } },
             tooltip: { y: { formatter: value => value.toLocaleString() + ' responses' } },
+            ...(handleSelect ? { chart: clickableChartConfig(handleSelect) } : {}),
           })}
         />
       </div>
@@ -73,6 +76,7 @@ export function ResponseTrendChart({ rows = [] }) {
             xaxis: sharedXAxis,
             yaxis: { min: 0, max: 100, labels: { style: { colors: TEXT_MUTED, fontSize: '11px' }, formatter: value => Math.round(value) + '%' } },
             tooltip: { y: { formatter: value => value + '% satisfied' } },
+            ...(handleSelect ? { chart: clickableChartConfig(handleSelect) } : {}),
           })}
         />
       </div>
@@ -80,7 +84,7 @@ export function ResponseTrendChart({ rows = [] }) {
   );
 }
 
-export function RatingBarChart({ rows = [] }) {
+export function RatingBarChart({ rows = [], onSelect }) {
   if (!rows.length) return <div className="empty-state">No rating data for this period.</div>;
 
   const sorted = [...rows].sort((a, b) => Number(a.score) - Number(b.score));
@@ -108,12 +112,13 @@ export function RatingBarChart({ rows = [] }) {
         xaxis: { categories, labels: { style: { colors: TEXT_MUTED, fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
         yaxis: { labels: { style: { colors: TEXT_PRIMARY, fontSize: '12px', fontWeight: 600 } } },
         grid: { borderColor: GRID_COLOR, xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+        ...(onSelect ? { chart: clickableChartConfig(index => onSelect(sorted[index])) } : {}),
       })}
     />
   );
 }
 
-export function IssuesBarChart({ rows = [] }) {
+export function IssuesBarChart({ rows = [], onSelect }) {
   if (!rows.length) return <div className="empty-state">No negative or neutral issues found for this period.</div>;
 
   const categories = rows.map(row => row.label);
@@ -142,12 +147,13 @@ export function IssuesBarChart({ rows = [] }) {
             formatter: (value, { dataPointIndex }) => value.toLocaleString() + ' responses · ' + rows[dataPointIndex].rating,
           },
         },
+        ...(onSelect ? { chart: clickableChartConfig(index => onSelect(rows[index])) } : {}),
       })}
     />
   );
 }
 
-export function MetricBarChart({ rows = [], nameKey = 'name' }) {
+export function MetricBarChart({ rows = [], nameKey = 'name', onSelect }) {
   if (!rows.length) return <div className="empty-state">No data for this breakdown.</div>;
 
   const categories = rows.map(row => row[nameKey] || row.name || row.label || 'No label');
@@ -171,12 +177,13 @@ export function MetricBarChart({ rows = [], nameKey = 'name' }) {
         xaxis: { categories, labels: { style: { colors: TEXT_MUTED, fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
         yaxis: { labels: { style: { colors: TEXT_PRIMARY, fontSize: '12px', fontWeight: 600 } } },
         grid: { borderColor: GRID_COLOR, xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+        ...(onSelect ? { chart: clickableChartConfig(index => onSelect(rows[index])) } : {}),
       })}
     />
   );
 }
 
-export function UserTypeDonutChart({ rows = [], total = 0 }) {
+export function UserTypeDonutChart({ rows = [], total = 0, onSelect }) {
   if (!rows.length) return <div className="empty-state">No data for this breakdown.</div>;
 
   const labels = rows.map(row => row.name);
@@ -198,6 +205,7 @@ export function UserTypeDonutChart({ rows = [], total = 0 }) {
         },
         legend: { position: 'bottom', fontSize: '12px', labels: { colors: TEXT_PRIMARY }, markers: { radius: 4 } },
         tooltip: { y: { formatter: (value) => value.toLocaleString() + (total ? ' of ' + total.toLocaleString() + ' responses' : ' responses') } },
+        ...(onSelect ? { chart: clickableChartConfig(index => onSelect(rows[index])) } : {}),
       })}
     />
   );

@@ -27,7 +27,7 @@ export default function KioskLoginPage() {
   return (
     <div className="kiosk-shell">
       <main className="kiosk-main">
-        <section className="kiosk-panel kiosk-setup-panel">
+        <section className="kiosk-panel kiosk-setup-panel kiosk-login-panel">
           <div className="kiosk-heading">
             <span className="kiosk-eyebrow">Tablet Setup</span>
             <h1>Sign in to continue</h1>

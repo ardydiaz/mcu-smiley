@@ -32,7 +32,7 @@ export default function KioskSsoCallbackPage() {
   return (
     <div className="kiosk-shell">
       <main className="kiosk-main">
-        <section className="kiosk-panel kiosk-setup-panel">
+        <section className="kiosk-panel kiosk-setup-panel kiosk-login-panel">
           <div className="setup-card">
             <h1>Completing sign-in</h1>
             <Loading label="Verifying your account" />

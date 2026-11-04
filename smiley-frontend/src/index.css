@@ -1932,6 +1932,22 @@ th {
   font-size: 1.35rem;
 }
 
+.modal.modal-wide {
+  width: min(1100px, 100%);
+}
+
+.dashboard-drilldown-modal {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.dashboard-drilldown-modal .feedback-table-wrap {
+  min-width: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
 
 @media (orientation: landscape) and (max-height: 820px) {
   .user-type-page {
@@ -3217,6 +3233,18 @@ th {
   background-attachment: fixed;
 }
 
+.kiosk-shell:has(.kiosk-login-panel) {
+  height: auto;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.kiosk-shell:has(.kiosk-login-panel) .kiosk-main {
+  min-height: 100dvh;
+  padding-block: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-bottom));
+}
+
 @media (orientation: landscape) {
   .kiosk-shell:has(.user-type-page) {
     height: 100dvh;
@@ -3226,6 +3254,17 @@ th {
 
   .kiosk-shell:has(.user-type-page) .kiosk-main {
     min-height: 100dvh;
+  }
+
+  .kiosk-shell:has(.kiosk-login-panel) {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .kiosk-shell:has(.kiosk-login-panel) .kiosk-main {
+    min-height: 100dvh;
+    padding-block: 0.75rem;
   }
 
   .kiosk-shell:has(.feedback-page) {
