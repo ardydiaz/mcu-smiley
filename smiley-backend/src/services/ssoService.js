@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
-import { normalizePermissions } from '../config/menuPermissions.js';
+import { hasKioskAccess, normalizePermissions } from '../config/menuPermissions.js';
 import { User } from '../models/User.js';
 import { AppError } from '../utils/response.js';
 
@@ -57,15 +57,20 @@ function requireSsoConfig() {
   return config;
 }
 
-function safeReturnTo(returnTo) {
+function safeReturnTo(returnTo, origin) {
+  if (origin === 'kiosk') {
+    return typeof returnTo === 'string' && returnTo.startsWith('/kiosk') ? returnTo : '/kiosk/setup';
+  }
   return typeof returnTo === 'string' && returnTo.startsWith('/admin') ? returnTo : '/admin/dashboard';
 }
 
-export function buildAuthorizationUrl(returnTo) {
+export function buildAuthorizationUrl(returnTo, origin) {
   const config = requireSsoConfig();
+  const normalizedOrigin = origin === 'kiosk' ? 'kiosk' : 'admin';
   const state = jwt.sign({
     nonce: crypto.randomBytes(16).toString('hex'),
-    returnTo: safeReturnTo(returnTo),
+    origin: normalizedOrigin,
+    returnTo: safeReturnTo(returnTo, normalizedOrigin),
   }, env.JWT_SECRET, {
     algorithm: 'HS256',
     expiresIn: stateExpiresIn,
@@ -150,6 +155,7 @@ export async function handleSsoCallback({ code, state }) {
   const config = requireSsoConfig();
   if (!code || !state) throw new AppError('Missing SSO callback parameters', 400);
   const statePayload = verifyState(state);
+  const origin = statePayload.origin === 'kiosk' ? 'kiosk' : 'admin';
   const tokenPayload = await exchangeCode(code, config);
   const profile = await fetchProfile(tokenPayload.access_token, config, tokenPayload.id_token);
   const provider = config.providerName.toLowerCase().replace(/[^a-z0-9_-]+/g, '-') || 'sso';
@@ -158,6 +164,27 @@ export async function handleSsoCallback({ code, state }) {
     ? await User.updateSsoProfile(existingUser.id, { ...profile, provider })
     : await User.createPendingSsoUser({ ...profile, provider });
   const permissions = normalizePermissions(user.role, await User.listPermissions(user.id));
+
+  if (origin === 'kiosk') {
+    if (user.status === 'pending') {
+      return { approved: false, redirectUrl: frontendUrl() + '/kiosk/login?sso=pending' };
+    }
+    if (user.status !== 'active' || !hasKioskAccess({ role: user.role, permissions })) {
+      return { approved: false, redirectUrl: frontendUrl() + '/kiosk/login?sso=denied' };
+    }
+    await User.touchLogin(user.id);
+    const token = jwt.sign({ role: user.role }, env.JWT_SECRET, {
+      algorithm: 'HS256',
+      subject: String(user.id),
+      expiresIn: env.KIOSK_JWT_EXPIRES_IN,
+      issuer: 'smiley-api',
+      audience: 'smiley-kiosk',
+    });
+    const redirect = new URL(frontendUrl() + '/kiosk/sso/callback');
+    redirect.searchParams.set('token', token);
+    redirect.searchParams.set('returnTo', safeReturnTo(statePayload.returnTo, 'kiosk'));
+    return { approved: true, redirectUrl: redirect.toString() };
+  }
 
   if (user.status === 'pending') {
     return { approved: false, redirectUrl: frontendUrl() + '/admin/login?sso=pending' };
@@ -175,6 +202,6 @@ export async function handleSsoCallback({ code, state }) {
   });
   const redirect = new URL(frontendUrl() + '/admin/sso/callback');
   redirect.searchParams.set('token', token);
-  redirect.searchParams.set('returnTo', safeReturnTo(statePayload.returnTo));
+  redirect.searchParams.set('returnTo', safeReturnTo(statePayload.returnTo, 'admin'));
   return { approved: true, redirectUrl: redirect.toString() };
 }

@@ -8,7 +8,9 @@ import Toast from '../../components/common/Toast.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useDataTable } from '../../hooks/useDataTable.js';
 import { authService } from '../../services/authService.js';
-import { menuPermissions } from '../../utils/menuPermissions.js';
+import { KIOSK_PERMISSION, menuPermissions } from '../../utils/menuPermissions.js';
+
+const allPermissionDefs = [...menuPermissions, KIOSK_PERMISSION];
 
 function StatusBadge({ status }) {
   return <span className={'status-badge status-' + status}>{status}</span>;
@@ -104,7 +106,7 @@ export default function AdminUsersPage() {
                     ) : user.permissions?.length ? (
                       <div className="permission-chip-list">
                         {user.permissions.map(permission => {
-                          const label = menuPermissions.find(item => item.key === permission)?.label || permission;
+                          const label = allPermissionDefs.find(item => item.key === permission)?.label || permission;
                           return <span key={permission} className="permission-chip">{label}</span>;
                         })}
                       </div>
@@ -168,6 +170,16 @@ export default function AdminUsersPage() {
                   <span>{permission.label}</span>
                 </label>
               ))}
+            </div>
+            <div className="permission-grid" role="group" aria-label="Other access">
+              <label key={KIOSK_PERMISSION.key} className="checkbox-field permission-checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedPermissions.includes(KIOSK_PERMISSION.key)}
+                  onChange={() => togglePermission(KIOSK_PERMISSION.key)}
+                />
+                <span>{KIOSK_PERMISSION.label}</span>
+              </label>
             </div>
             {permissionError ? <p className="field-error-text">{permissionError}</p> : null}
             <div className="button-row rating-option-modal-actions">

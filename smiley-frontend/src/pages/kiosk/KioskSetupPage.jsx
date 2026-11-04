@@ -1,4 +1,4 @@
-import { Building2, Check, CheckCircle2, MapPin, Monitor, RefreshCcw, Search, Trash2 } from 'lucide-react';
+import { Building2, Check, CheckCircle2, LogOut, MapPin, Monitor, RefreshCcw, Search, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../../components/common/Button.jsx';
@@ -6,7 +6,7 @@ import Loading from '../../components/common/Loading.jsx';
 import Toast from '../../components/common/Toast.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { terminalService } from '../../services/terminalService.js';
-import { clearKioskTerminal, getKioskDeviceId, getKioskTerminal, setKioskTerminal } from '../../utils/storage.js';
+import { clearKioskAuthSession, clearKioskTerminal, getKioskAuthUser, getKioskDeviceId, getKioskTerminal, setKioskTerminal } from '../../utils/storage.js';
 
 function getSafeNext(value) {
   if (!value || value === '/kiosk/setup') return '/kiosk/smiley';
@@ -18,6 +18,7 @@ export default function KioskSetupPage() {
   const [searchParams] = useSearchParams();
   const deviceId = getKioskDeviceId();
   const currentTerminal = getKioskTerminal();
+  const kioskUser = getKioskAuthUser();
   const [selectedCode, setSelectedCode] = useState(currentTerminal?.terminalCode || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState('');
@@ -80,6 +81,11 @@ export default function KioskSetupPage() {
     }
   }
 
+  function signOut() {
+    clearKioskAuthSession();
+    navigate('/kiosk/login', { replace: true });
+  }
+
   return (
     <section className="kiosk-panel kiosk-setup-panel">
       <div className="kiosk-heading">
@@ -89,6 +95,13 @@ export default function KioskSetupPage() {
       </div>
 
       <form className="setup-card" onSubmit={saveTerminal}>
+        {kioskUser ? (
+          <div className="setup-signed-in-row">
+            <span>Signed in as <strong>{kioskUser.name}</strong> ({kioskUser.email})</span>
+            <Button type="button" variant="secondary" icon={LogOut} onClick={signOut} disabled={saving}>Sign out</Button>
+          </div>
+        ) : null}
+
         {currentTerminal ? (
           <div className="setup-current">
             <CheckCircle2 size={22} aria-hidden="true" />

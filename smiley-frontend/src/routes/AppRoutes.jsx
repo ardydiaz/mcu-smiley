@@ -14,10 +14,13 @@ import ReportsPage from '../pages/admin/ReportsPage.jsx';
 import TerminalDepartmentsPage from '../pages/admin/TerminalDepartmentsPage.jsx';
 import TerminalsPage from '../pages/admin/TerminalsPage.jsx';
 import FeedbackPage from '../pages/kiosk/FeedbackPage.jsx';
+import KioskLoginPage from '../pages/kiosk/KioskLoginPage.jsx';
 import KioskSetupPage from '../pages/kiosk/KioskSetupPage.jsx';
+import KioskSsoCallbackPage from '../pages/kiosk/KioskSsoCallbackPage.jsx';
 import SmileyPage from '../pages/kiosk/SmileyPage.jsx';
 import ThankYouPage from '../pages/kiosk/ThankYouPage.jsx';
 import UserTypePage from '../pages/kiosk/UserTypePage.jsx';
+import KioskAuthRoute from './KioskAuthRoute.jsx';
 import KioskRoute from './KioskRoute.jsx';
 import PermissionRoute from './PermissionRoute.jsx';
 import ProtectedRoute from './ProtectedRoute.jsx';
@@ -33,14 +36,18 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/kiosk/smiley" replace />} />
+      <Route path="/kiosk/login" element={<KioskLoginPage />} />
+      <Route path="/kiosk/sso/callback" element={<KioskSsoCallbackPage />} />
       <Route path="/kiosk" element={<KioskLayout />}>
-        <Route path="setup" element={<KioskSetupPage />} />
-        <Route element={<KioskRoute />}>
-          <Route index element={<Navigate to="/kiosk/smiley" replace />} />
-          <Route path="smiley" element={<SmileyPage />} />
-          <Route path="user-type" element={<UserTypePage />} />
-          <Route path="feedback" element={<FeedbackPage />} />
-          <Route path="thank-you" element={<ThankYouPage />} />
+        <Route element={<KioskAuthRoute />}>
+          <Route path="setup" element={<KioskSetupPage />} />
+          <Route element={<KioskRoute />}>
+            <Route index element={<Navigate to="/kiosk/smiley" replace />} />
+            <Route path="smiley" element={<SmileyPage />} />
+            <Route path="user-type" element={<UserTypePage />} />
+            <Route path="feedback" element={<FeedbackPage />} />
+            <Route path="thank-you" element={<ThankYouPage />} />
+          </Route>
         </Route>
       </Route>
       <Route path="/admin/login" element={<LoginPage />} />

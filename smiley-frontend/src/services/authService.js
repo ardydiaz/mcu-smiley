@@ -16,11 +16,14 @@ export const authService = {
   async me() {
     return apiRequest('/auth/me');
   },
+  async kioskMe() {
+    return apiRequest('/auth/kiosk/me', { auth: 'kiosk' });
+  },
   async ssoConfig() {
     return apiRequest('/auth/sso/config', { auth: 'none' });
   },
-  ssoStartUrl(returnTo = '/admin/dashboard') {
-    const query = new URLSearchParams({ returnTo });
+  ssoStartUrl(returnTo = '/admin/dashboard', origin = 'admin') {
+    const query = new URLSearchParams({ returnTo, origin });
     return apiBaseUrl + '/auth/sso/start?' + query.toString();
   },
   async listUsers() {

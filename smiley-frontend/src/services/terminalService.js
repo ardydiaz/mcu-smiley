@@ -36,12 +36,12 @@ export const terminalService = {
     return response.data;
   },
   async listAvailableForKiosk(deviceId) {
-    const response = await apiRequest('/kiosk/terminals/available' + buildQuery({ deviceId }), { auth: 'none' });
+    const response = await apiRequest('/kiosk/terminals/available' + buildQuery({ deviceId }), { auth: 'kiosk' });
     return response.data;
   },
   async assignForKiosk({ terminalCode, deviceId }) {
     const response = await apiRequest('/kiosk/terminals/assign', {
-      auth: 'none',
+      auth: 'kiosk',
       method: 'POST',
       body: JSON.stringify({ terminalCode, deviceId }),
     });
@@ -49,7 +49,7 @@ export const terminalService = {
   },
   async heartbeatForKiosk({ terminalCode, deviceId }) {
     const response = await apiRequest('/kiosk/terminals/heartbeat', {
-      auth: 'none',
+      auth: 'kiosk',
       method: 'POST',
       body: JSON.stringify({ terminalCode, deviceId }),
     });
@@ -57,7 +57,7 @@ export const terminalService = {
   },
   async releaseForKiosk({ terminalCode, deviceId }) {
     const response = await apiRequest('/kiosk/terminals/release', {
-      auth: 'none',
+      auth: 'kiosk',
       method: 'POST',
       body: JSON.stringify({ terminalCode, deviceId }),
     });

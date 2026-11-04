@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
-import { completeSso, getSsoConfig, listUsers, login, me, register, startSso, updateUserAccess } from '../controllers/authController.js';
-import { authMiddleware, requireAuth } from '../middleware/authMiddleware.js';
+import { completeSso, getSsoConfig, kioskMe, listUsers, login, me, register, startSso, updateUserAccess } from '../controllers/authController.js';
+import { authMiddleware, requireAuth, requireKioskAuth } from '../middleware/authMiddleware.js';
 import { validate, idSchema } from '../middleware/validationMiddleware.js';
 import { loginSchema, registerSchema, userAccessSchema } from '../validations/authValidation.js';
 const router = Router();
@@ -14,6 +14,7 @@ router.get('/sso/callback', completeSso);
 router.get('/microsoft/start', ssoLimiter, startSso);
 router.get('/microsoft/callback', completeSso);
 router.get('/me', requireAuth, me);
+router.get('/kiosk/me', requireKioskAuth, kioskMe);
 router.get('/users', authMiddleware, listUsers);
 router.put('/users/:id/access', authMiddleware, validate(idSchema, 'params'), validate(userAccessSchema), updateUserAccess);
 export default router;

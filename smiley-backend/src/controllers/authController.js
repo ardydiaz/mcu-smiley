@@ -54,13 +54,17 @@ export function getSsoConfig(req, res) {
 
 export function startSso(req, res) {
   res.set('Cache-Control', 'no-store');
-  return res.redirect(buildAuthorizationUrl(req.query.returnTo));
+  return res.redirect(buildAuthorizationUrl(req.query.returnTo, req.query.origin));
 }
 
 export async function completeSso(req, res) {
   res.set('Cache-Control', 'no-store');
   const result = await handleSsoCallback({ code: req.query.code, state: req.query.state });
   return res.redirect(result.redirectUrl);
+}
+
+export function kioskMe(req, res) {
+  return success(res, req.kioskUser);
 }
 
 export async function listUsers(req, res) {

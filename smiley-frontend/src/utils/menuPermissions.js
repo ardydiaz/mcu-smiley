@@ -11,6 +11,8 @@ export const menuPermissions = [
 
 export const menuPermissionKeys = menuPermissions.map(permission => permission.key);
 
+export const KIOSK_PERMISSION = { key: 'kiosk-setup', label: 'Kiosk Setup' };
+
 export function canAccessMenu(user, permission) {
   if (user?.role === 'admin') return true;
   return Array.isArray(user?.permissions) && user.permissions.includes(permission);

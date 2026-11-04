@@ -2,6 +2,8 @@ const tokenKey = 'smiley_auth_token';
 const userKey = 'smiley_auth_user';
 const kioskTerminalKey = 'smiley_kiosk_terminal';
 const kioskDeviceKey = 'smiley_kiosk_device_id';
+const kioskAuthTokenKey = 'smiley_kiosk_auth_token';
+const kioskAuthUserKey = 'smiley_kiosk_auth_user';
 const envTerminalCode = import.meta.env.VITE_TERMINAL_CODE?.trim() || '';
 
 export function getToken() {
@@ -77,6 +79,30 @@ export function getKioskTerminalCode() {
 
 export function clearKioskTerminal() {
   localStorage.removeItem(kioskTerminalKey);
+}
+
+export function getKioskAuthToken() {
+  return localStorage.getItem(kioskAuthTokenKey);
+}
+
+export function setKioskAuthSession({ token, user }) {
+  localStorage.setItem(kioskAuthTokenKey, token);
+  localStorage.setItem(kioskAuthUserKey, JSON.stringify(user));
+}
+
+export function getKioskAuthUser() {
+  const value = localStorage.getItem(kioskAuthUserKey);
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+export function clearKioskAuthSession() {
+  localStorage.removeItem(kioskAuthTokenKey);
+  localStorage.removeItem(kioskAuthUserKey);
 }
 
 export function getKioskDeviceId() {

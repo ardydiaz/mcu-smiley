@@ -11,7 +11,15 @@ export const menuPermissions = [
 
 export const menuPermissionKeys = menuPermissions.map(permission => permission.key);
 
+export const KIOSK_PERMISSION_KEY = 'kiosk-setup';
+
+export const allPermissionKeys = [...menuPermissionKeys, KIOSK_PERMISSION_KEY];
+
 export function normalizePermissions(role, permissions = []) {
-  if (role === 'admin') return menuPermissionKeys;
-  return [...new Set(permissions)].filter(permission => menuPermissionKeys.includes(permission));
+  if (role === 'admin') return allPermissionKeys;
+  return [...new Set(permissions)].filter(permission => allPermissionKeys.includes(permission));
+}
+
+export function hasKioskAccess(user) {
+  return user?.role === 'admin' || Boolean(user?.permissions?.includes(KIOSK_PERMISSION_KEY));
 }

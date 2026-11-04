@@ -20,6 +20,7 @@ const schema = z.object({
   DB_NAME: z.string().regex(/^[a-zA-Z0-9_]+$/).default('smiley_face'),
   JWT_SECRET: z.string().default(''),
   JWT_EXPIRES_IN: z.string().regex(/^\d+[smhd]$/).default('8h'),
+  KIOSK_JWT_EXPIRES_IN: z.string().regex(/^\d+[smhd]$/).default('400d'),
   ALLOW_ADMIN_REGISTRATION: booleanEnv.default(false),
   FRONTEND_URL: optionalUrl,
   SSO_ENABLED: booleanEnv.default(false),
