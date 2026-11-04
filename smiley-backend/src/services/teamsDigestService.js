@@ -40,6 +40,15 @@ function buildDigestDownloadUrl(date) {
   return `${base}/public/teams-digest/report.xlsx?token=${encodeURIComponent(token)}`;
 }
 
+function formatVoteLine(vote) {
+  const department = vote.department || 'Unassigned department';
+  const location = vote.location || 'Unknown location';
+  const terminal = vote.terminal || vote.terminal_code || 'no terminal';
+  const place = terminal && terminal !== location ? `${location}, ${terminal}` : location;
+  const feedback = vote.feedback ? '"' + vote.feedback + '"' : 'No written feedback';
+  return `${vote.rating} ${vote.emoji} — **${department}** (${place}) — ${vote.user_type} — ${feedback}`;
+}
+
 function buildCardBody(votes, displayDate) {
   const heading = { type: 'TextBlock', text: `Smiley Face Daily Feedback Digest | ${displayDate}`, weight: 'Bolder', size: 'Medium', wrap: true };
   if (!votes.length) {
@@ -51,7 +60,8 @@ function buildCardBody(votes, displayDate) {
   const responseWord = votes.length === 1 ? 'response' : 'responses';
   return [
     heading,
-    { type: 'TextBlock', text: `${votes.length} dissatisfied feedback ${responseWord} received on ${displayDate}.`, wrap: true },
+    { type: 'TextBlock', text: `${votes.length} dissatisfied feedback ${responseWord} received on ${displayDate}:`, weight: 'Bolder', wrap: true },
+    ...votes.map(vote => ({ type: 'TextBlock', text: '- ' + formatVoteLine(vote), wrap: true })),
   ];
 }
 
