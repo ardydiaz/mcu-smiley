@@ -40,25 +40,18 @@ function buildDigestDownloadUrl(date) {
   return `${base}/public/teams-digest/report.xlsx?token=${encodeURIComponent(token)}`;
 }
 
-function formatVoteLine(vote) {
-  const department = vote.department || 'Unassigned department';
-  const location = vote.location || 'Unknown location';
-  const feedback = vote.feedback ? '"' + vote.feedback + '"' : 'No written feedback';
-  return `${vote.rating} ${vote.emoji} — **${department}** (${location}, ${vote.terminal || vote.terminal_code || 'no terminal'}) — ${vote.user_type} — ${feedback}`;
-}
-
-function buildCardBody(votes, today) {
-  const heading = { type: 'TextBlock', text: 'Smiley Daily Digest - ' + today, weight: 'Bolder', size: 'Medium', wrap: true };
+function buildCardBody(votes, displayDate) {
+  const heading = { type: 'TextBlock', text: `Smiley Face Daily Feedback Digest | ${displayDate}`, weight: 'Bolder', size: 'Medium', wrap: true };
   if (!votes.length) {
     return [
       heading,
-      { type: 'TextBlock', text: `No dissatisfied feedback recorded for ${today}. Great day!`, wrap: true, color: 'Good' },
+      { type: 'TextBlock', text: `No dissatisfied feedback recorded for ${displayDate}. Great day!`, wrap: true, color: 'Good' },
     ];
   }
+  const responseWord = votes.length === 1 ? 'response' : 'responses';
   return [
     heading,
-    { type: 'TextBlock', text: `${votes.length} dissatisfied vote(s) recorded for ${today}:`, weight: 'Bolder', color: 'Attention', wrap: true },
-    ...votes.map(vote => ({ type: 'TextBlock', text: '- ' + formatVoteLine(vote), wrap: true })),
+    { type: 'TextBlock', text: `${votes.length} dissatisfied feedback ${responseWord} received on ${displayDate}.`, wrap: true },
   ];
 }
 
@@ -67,7 +60,7 @@ function buildCardBody(votes, today) {
 // text} body gets silently rejected (run shows "Failed" with no detail).
 // The webhook itself can't carry a real file attachment (plain JSON POST),
 // so the report is offered as a signed download link instead.
-function buildDigestMessage(votes, today, downloadUrl) {
+function buildDigestMessage(votes, displayDate, downloadUrl) {
   return {
     type: 'message',
     attachments: [
@@ -77,7 +70,7 @@ function buildDigestMessage(votes, today, downloadUrl) {
           $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
           type: 'AdaptiveCard',
           version: '1.4',
-          body: buildCardBody(votes, today),
+          body: buildCardBody(votes, displayDate),
           actions: votes.length ? [{ type: 'Action.OpenUrl', title: 'Download Excel Report', url: downloadUrl }] : [],
         },
       },
@@ -90,9 +83,13 @@ export async function sendDailySadVotesDigest() {
     logger.info('Teams digest skipped: TEAMS_SMILEY_WEBHOOK_URL is not configured');
     return { sent: false, sadVoteCount: 0 };
   }
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: env.TEAMS_DIGEST_TIMEZONE });
+  const now = new Date();
+  const today = now.toLocaleDateString('en-CA', { timeZone: env.TEAMS_DIGEST_TIMEZONE });
+  const displayDate = now.toLocaleDateString('en-US', {
+    timeZone: env.TEAMS_DIGEST_TIMEZONE, month: 'long', day: 'numeric', year: 'numeric',
+  });
   const votes = await getSadVotes(today);
-  const message = buildDigestMessage(votes, today, buildDigestDownloadUrl(today));
+  const message = buildDigestMessage(votes, displayDate, buildDigestDownloadUrl(today));
   const response = await fetch(env.TEAMS_SMILEY_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
