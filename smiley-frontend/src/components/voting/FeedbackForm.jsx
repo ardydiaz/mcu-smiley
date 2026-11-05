@@ -1,11 +1,37 @@
-import { ArrowLeft, Check, Send } from 'lucide-react';
+import { ArrowLeft, Check, Pencil, Send, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import Button from '../common/Button.jsx';
 import Loading from '../common/Loading.jsx';
+import Modal from '../common/Modal.jsx';
 
 export default function FeedbackForm({ value, selectedOptions = [], options = [], loading, optionsLoading, onChange, onOptionSelect, onSubmit, onBack }) {
-  const remainingCharacters = 2000 - value.length;
   const requiresText = selectedOptions.some(option => option.requiresText || option.requires_text);
   const canSubmit = selectedOptions.length > 0 && (!requiresText || value.trim());
+  const [specifyOpen, setSpecifyOpen] = useState(false);
+  const [draftText, setDraftText] = useState(value);
+
+  useEffect(() => {
+    if (!requiresText) setSpecifyOpen(false);
+  }, [requiresText]);
+
+  function openSpecify() {
+    setDraftText(value);
+    setSpecifyOpen(true);
+  }
+
+  function handleOptionClick(option) {
+    const requires = option.requiresText || option.requires_text;
+    const wasActive = selectedOptions.some(selected => selected.id === option.id);
+    onOptionSelect(option);
+    if (requires && !wasActive) openSpecify();
+  }
+
+  function saveSpecify() {
+    onChange(draftText);
+    setSpecifyOpen(false);
+  }
+
+  const remainingCharacters = 2000 - draftText.length;
 
   return (
     <form className="feedback-form feedback-choice-form" onSubmit={onSubmit} noValidate>
@@ -20,7 +46,7 @@ export default function FeedbackForm({ value, selectedOptions = [], options = []
                   key={option.id}
                   type="button"
                   className={'feedback-option-card' + (active ? ' active' : '')}
-                  onClick={() => onOptionSelect(option)}
+                  onClick={() => handleOptionClick(option)}
                   aria-pressed={active}
                 >
                   <span className={'feedback-option-indicator' + (active ? ' active' : '')} aria-hidden="true">
@@ -37,19 +63,41 @@ export default function FeedbackForm({ value, selectedOptions = [], options = []
       </div>
 
       {requiresText ? (
-        <div className="field">
-          <label htmlFor="feedback">Please specify <span className="required-mark" aria-hidden="true">*</span></label>
+        <button
+          type="button"
+          className={'feedback-specify-summary' + (value.trim() ? ' is-filled' : '')}
+          onClick={openSpecify}
+        >
+          <span className="feedback-specify-summary-icon" aria-hidden="true"><Pencil size={18} /></span>
+          <span className="feedback-specify-summary-text">
+            <strong>{value.trim() ? 'Your details' : 'Tap to add details'} <span className="required-mark" aria-hidden="true">*</span></strong>
+            <span>{value.trim() || 'Required - tell us more about your experience'}</span>
+          </span>
+        </button>
+      ) : null}
+
+      {specifyOpen ? (
+        <Modal
+          title="Please specify"
+          onClose={() => setSpecifyOpen(false)}
+          className="feedback-specify-modal"
+          footer={(
+            <div className="button-row">
+              <Button type="button" variant="secondary" icon={X} onClick={() => setSpecifyOpen(false)}>Cancel</Button>
+              <Button type="button" icon={Check} onClick={saveSpecify} disabled={!draftText.trim()}>Save</Button>
+            </div>
+          )}
+        >
           <textarea
-            id="feedback"
-            aria-describedby="feedback-help"
-            value={value}
+            autoFocus
+            className="feedback-specify-textarea"
+            value={draftText}
             maxLength={2000}
-            required
-            onChange={event => onChange(event.target.value)}
+            onChange={event => setDraftText(event.target.value)}
             placeholder="Share your experience"
           />
-          <p id="feedback-help" className="field-hint">Required - {remainingCharacters} characters left</p>
-        </div>
+          <p className="field-hint">Required - {remainingCharacters} characters left</p>
+        </Modal>
       ) : null}
 
       <div className="button-row kiosk-form-actions">

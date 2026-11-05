@@ -2580,6 +2580,94 @@ th {
   margin-left: auto;
 }
 
+.feedback-specify-summary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+  border: 1.5px dashed rgba(92, 41, 124, 0.35);
+  border-radius: 18px;
+  background: #ffffff;
+  color: #21112c;
+  padding: 1.1rem 1.3rem;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(20, 0, 32, 0.1);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.feedback-specify-summary:hover,
+.feedback-specify-summary:focus-visible {
+  border-color: var(--mcu-purple);
+  box-shadow: 0 10px 26px rgba(92, 41, 124, 0.18);
+  transform: translateY(-0.12rem);
+}
+
+.feedback-specify-summary.is-filled {
+  border-style: solid;
+  border-color: rgba(92, 41, 124, 0.3);
+}
+
+.feedback-specify-summary-icon {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--mcu-purple), var(--mcu-purple-haze));
+  color: #ffffff;
+}
+
+.feedback-specify-summary-text {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.feedback-specify-summary-text strong {
+  font-size: 1.05rem;
+}
+
+.feedback-specify-summary-text span:last-child {
+  color: #5c6b78;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feedback-specify-modal {
+  width: min(640px, 100%);
+}
+
+.feedback-specify-textarea {
+  width: 100%;
+  min-height: clamp(10rem, 28vh, 16rem);
+  border: 1px solid #d7e2e8;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  font: inherit;
+  font-size: 1.1rem;
+  line-height: 1.5;
+  resize: vertical;
+  color: #21112c;
+}
+
+.feedback-specify-textarea:focus {
+  outline: 0;
+  border-color: var(--mcu-purple);
+  box-shadow: 0 0 0 4px rgba(92, 41, 124, 0.14);
+}
+
+@media (max-width: 640px), (orientation: landscape) and (max-height: 560px) {
+  .feedback-specify-modal .button-row .button {
+    min-height: 3.2rem;
+    flex: 1;
+  }
+}
+
 .checkbox-field {
   border: 1px solid #d7e2e8;
   border-radius: 12px;
