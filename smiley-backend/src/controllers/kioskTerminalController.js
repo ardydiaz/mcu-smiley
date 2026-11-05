@@ -8,7 +8,6 @@ function throwAsAppError(error) {
 }
 
 export async function listAvailableKioskTerminals(req, res) {
-  await TerminalKioskSession.releaseStale();
   return success(res, await TerminalKioskSession.listAvailable(req.validated?.query));
 }
 

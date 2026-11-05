@@ -1,7 +1,5 @@
 import { pool, query } from '../config/database.js';
 
-const staleMinutes = 2;
-
 const terminalSelect = `
   SELECT
     t.id,
@@ -30,18 +28,7 @@ function normalizeDeviceId(deviceId) {
 }
 
 export const TerminalKioskSession = {
-  async releaseStale() {
-    const result = await query(
-      `UPDATE terminal_kiosk_sessions
-       SET status = 'released', released_at = UTC_TIMESTAMP()
-       WHERE status = 'active'
-         AND last_seen_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL ${staleMinutes} MINUTE)`,
-    );
-    return result.affectedRows || 0;
-  },
-
   async listAvailable({ deviceId } = {}) {
-    await this.releaseStale();
     const normalizedDeviceId = normalizeDeviceId(deviceId);
     const parameters = [];
     let deviceClause = 's.id IS NULL';
@@ -76,11 +63,6 @@ export const TerminalKioskSession = {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-      await connection.execute(
-        `UPDATE terminal_kiosk_sessions
-         SET status = 'released', released_at = UTC_TIMESTAMP()
-         WHERE status = 'active' AND last_seen_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL ${staleMinutes} MINUTE)`,
-      );
 
       const [terminalRows] = await connection.execute(
         `SELECT t.*, l.name AS location_name,
