@@ -121,7 +121,7 @@ a {
   justify-items: center;
   gap: 1.9rem;
   text-align: center;
-  margin-bottom: 5rem;
+  margin-bottom: 3rem;
 }
 
 .kiosk-eyebrow {
@@ -684,10 +684,10 @@ a {
   transition: color 220ms ease;
 }
 .feedback-form {
-  display: grid;
-  gap: 3rem;
-  width: min(720px, 100%);
-  margin: 0 auto;
+    display: grid;
+    gap: 20px 0px;
+    width: min(720px, 100%);
+    margin: 0 auto;
 }
 
 .field {
@@ -866,7 +866,7 @@ a {
   justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  margin-top: 3rem;
+  margin-top: 2rem;
 }
 
 .button {
