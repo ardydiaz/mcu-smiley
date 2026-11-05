@@ -42,6 +42,7 @@ export default function TerminalsPage() {
       terminal.terminal_code,
       terminal.name,
       terminal.status,
+      terminal.department_names,
     ].filter(Boolean).join(' '),
   );
 
@@ -198,6 +199,7 @@ export default function TerminalsPage() {
                 <th>Location</th>
                 <th>Code</th>
                 <th>Name</th>
+                <th>Department</th>
                 <th>Status</th>
                 <th>Kiosk</th>
                 <th>Action</th>
@@ -209,6 +211,7 @@ export default function TerminalsPage() {
                   <td>{terminal.location_name} #{terminal.location_id}</td>
                   <td>{terminal.terminal_code}</td>
                   <td>{terminal.name}</td>
+                  <td>{terminal.department_names || <span className="field-hint">Unassigned</span>}</td>
                   <td>{terminal.status}</td>
                   <td>
                     {terminal.reserved_by_device_id ? (

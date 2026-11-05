@@ -10,7 +10,13 @@ export const Terminal = {
     if (!includeInactive) clauses.push("t.status = 'active'");
     return query(
       `SELECT t.*, l.name AS location_name, t.status = 'active' AS active,
-         s.device_id AS reserved_by_device_id, s.last_seen_at AS reserved_last_seen_at
+         s.device_id AS reserved_by_device_id, s.last_seen_at AS reserved_last_seen_at,
+         (
+           SELECT GROUP_CONCAT(d.name ORDER BY d.name SEPARATOR ', ')
+           FROM terminal_departments td
+           JOIN departments d ON d.id = td.department_id
+           WHERE td.terminal_id = t.id
+         ) AS department_names
        FROM terminals t
        JOIN locations l ON l.id = t.location_id
        LEFT JOIN terminal_kiosk_sessions s ON s.terminal_id = t.id AND s.status = 'active'`
