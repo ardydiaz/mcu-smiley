@@ -97,7 +97,7 @@ export default function FeedbackPage() {
     <section className="kiosk-panel feedback-page">
       <div className="kiosk-heading">
         <span className="kiosk-eyebrow">Step 3 of 3</span>
-        <h1>Tell us more</h1>
+        <h1>How Was Your Experience?</h1>
         <p className="feedback-user-type">
           <span>User type</span>
           <strong>{vote.userType?.name || ''}</strong>

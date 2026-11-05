@@ -39,13 +39,13 @@ export default function UserTypePage() {
     <section className="kiosk-panel user-type-page">
       <div className="kiosk-heading">
         <span className="kiosk-eyebrow">Step 2 of 3</span>
-        <h1>Who are you?</h1>
-        {vote.rating ? (
+        <h1>What best describes you?</h1>
+        {/* {vote.rating ? (
           <p className="rating-recap">
             <span>{vote.rating.emoji}</span>
             <strong>{vote.rating.label}</strong>
           </p>
-        ) : null}
+        ) : null} */}
       </div>
       {loading && !data ? <Loading label="Loading user types" /> : null}
       {error && !data?.length ? <div className="empty-state">{error}</div> : null}

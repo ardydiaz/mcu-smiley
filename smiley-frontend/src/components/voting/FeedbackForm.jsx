@@ -10,7 +10,6 @@ export default function FeedbackForm({ value, selectedOptions = [], options = []
   return (
     <form className="feedback-form feedback-choice-form" onSubmit={onSubmit} noValidate>
       <div className="feedback-option-section">
-        <h2>What best describes your experience?</h2>
         {optionsLoading ? <Loading label="Loading feedback options" /> : null}
         {!optionsLoading && options.length ? (
           <div className="feedback-option-grid">
