@@ -3290,6 +3290,7 @@ th {
 
   .kiosk-shell:has(.user-type-page) .kiosk-main {
     min-height: 100dvh;
+    align-content: center;
   }
 
   .kiosk-shell:has(.kiosk-login-panel) {
@@ -3300,6 +3301,7 @@ th {
 
   .kiosk-shell:has(.kiosk-login-panel) .kiosk-main {
     min-height: 100dvh;
+    align-content: center;
     padding-block: 0.75rem;
   }
 
@@ -3312,7 +3314,7 @@ th {
 
   .kiosk-shell:has(.feedback-page) .kiosk-main {
     min-height: 100dvh;
-    align-content: start;
+    align-content: safe center;
     padding-bottom: max(2rem, env(safe-area-inset-bottom));
   }
 }
