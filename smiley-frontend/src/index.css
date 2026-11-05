@@ -91,7 +91,7 @@ a {
 
 .kiosk-panel {
   display: grid;
-  gap: clamp(7rem, 5vw, 2rem);
+  gap: clamp(1.25rem, 5vw, 2rem);
 }
 
 .kiosk-back-button {
@@ -119,8 +119,9 @@ a {
 .kiosk-heading {
   display: grid;
   justify-items: center;
-  gap: 1.5rem;
+  gap: 1.9rem;
   text-align: center;
+  margin-bottom: 5rem;
 }
 
 .kiosk-eyebrow {
@@ -865,6 +866,7 @@ a {
   justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin-top: 3rem;
 }
 
 .button {
