@@ -1,0 +1,9 @@
+/*
+  Pilot: Tailwind utilities only, no Preflight.
+  Preflight (Tailwind's CSS reset) is intentionally skipped here because the
+  rest of the app (kiosk + admin) already relies on index.css's own base
+  styles; importing the full "tailwindcss" entry would reset margins,
+  box-sizing, buttons, etc. across every page, not just the ones migrated.
+*/
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);

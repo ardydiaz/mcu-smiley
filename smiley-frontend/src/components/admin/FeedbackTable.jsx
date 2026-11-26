@@ -3,11 +3,12 @@ import { useState } from 'react';
 import Button from '../common/Button.jsx';
 import Modal from '../common/Modal.jsx';
 import { formatDateTime } from '../../utils/helpers.js';
+import { MUTED_TEXT, TABLE, TABLE_WRAP, TD, TH, TR } from './tableStyles.jsx';
 
 const messageIcon = String.fromCodePoint(0x1f4ac);
 
 function EmptyText({ children }) {
-  return <span className="muted-text">{children || 'N/A'}</span>;
+  return <span className={MUTED_TEXT}>{children || 'N/A'}</span>;
 }
 
 function DetailItem({ label, children }) {
@@ -19,45 +20,45 @@ function DetailItem({ label, children }) {
   );
 }
 
-export default function FeedbackTable({ items = [] }) {
+export default function FeedbackTable({ items = [], wrapClassName = '' }) {
   const [selectedFeedback, setSelectedFeedback] = useState(null);
 
   return (
     <>
-      <div className="table-wrap feedback-table-wrap">
-        <table className="feedback-data-table">
+      <div className={`${TABLE_WRAP} ${wrapClassName}`.trim()}>
+        <table className={`${TABLE} min-w-[980px]`}>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Rating</th>
-              <th>User Type</th>
-              <th>Department</th>
-              <th>Location</th>
-              <th>Tablet</th>
-              <th>Action</th>
+              <th className={TH}>Date</th>
+              <th className={TH}>Rating</th>
+              <th className={TH}>User Type</th>
+              <th className={TH}>Department</th>
+              <th className={TH}>Location</th>
+              <th className={TH}>Tablet</th>
+              <th className={TH}>Action</th>
             </tr>
           </thead>
           <tbody>
             {items.map(item => (
-              <tr key={item.id}>
-                <td className="date-cell">{formatDateTime(item.created_at)}</td>
-                <td>
+              <tr key={item.id} className={TR}>
+                <td className={`${TD} whitespace-nowrap font-normal text-[#53616d]`}>{formatDateTime(item.created_at)}</td>
+                <td className={TD}>
                   <span className="rating-table-pill">
                     <span aria-hidden="true">{item.rating_emoji || messageIcon}</span>
                     <strong>{item.rating}</strong>
                     <small>{item.score}</small>
                   </span>
                 </td>
-                <td><EmptyText>{item.user_type}</EmptyText></td>
-                <td className="department-table-cell"><EmptyText>{item.department}</EmptyText></td>
-                <td><EmptyText>{item.location}</EmptyText></td>
-                <td>
-                  <span className="terminal-cell">
-                    <strong>{item.terminal_code || 'N/A'}</strong>
-                    <span>{item.terminal || ''}</span>
-                  </span>
+                <td className={TD}><EmptyText>{item.user_type}</EmptyText></td>
+                <td className={`${TD} max-w-[280px]`}><EmptyText>{item.department}</EmptyText></td>
+                <td className={TD}><EmptyText>{item.location}</EmptyText></td>
+                <td className={TD}>
+                  <div className="grid gap-0.5">
+                    <span className="font-normal text-[#21112c]">{item.terminal_code || 'N/A'}</span>
+                    <span className="text-sm text-[#64748b]">{item.terminal || ''}</span>
+                  </div>
                 </td>
-                <td>
+                <td className={TD}>
                   <Button type="button" variant="secondary" icon={Eye} onClick={() => setSelectedFeedback(item)}>View</Button>
                 </td>
               </tr>

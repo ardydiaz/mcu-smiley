@@ -7,6 +7,7 @@ export const menuPermissions = [
   { key: 'locations', label: 'Locations', path: '/admin/locations' },
   { key: 'terminals', label: 'Terminals', path: '/admin/terminals' },
   { key: 'terminal-departments', label: 'Terminal Departments', path: '/admin/terminal-departments' },
+  { key: 'audit-logs', label: 'Audit Logs', path: '/admin/audit-logs' },
 ];
 
 export const menuPermissionKeys = menuPermissions.map(permission => permission.key);

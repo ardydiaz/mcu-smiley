@@ -18,6 +18,7 @@ import kioskTerminalRoutes from './routes/kioskTerminalRoutes.js';
 import voteRoutes from './routes/voteRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import auditLogRoutes from './routes/auditLogRoutes.js';
 import { errorMiddleware, notFound } from './middleware/errorMiddleware.js';
 import { openApiDocument } from './docs/openapi.js';
 
@@ -52,6 +53,7 @@ app.use('/api/terminal-departments', terminalAssignmentRoutes);
 app.use('/api/votes', voteRoutes);
 app.use('/api/dashboard', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, dashboardRoutes);
 app.use('/api/reports', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, reportRoutes);
+app.use('/api/audit-logs', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); }, auditLogRoutes);
 app.use(notFound);
 app.use(errorMiddleware);
 export default app;

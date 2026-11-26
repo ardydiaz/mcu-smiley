@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { listDepartments, listAllDepartments, createDepartment, updateDepartment, deleteDepartment } from '../controllers/departmentController.js';
 import { requireAuth, requirePermission } from '../middleware/authMiddleware.js';
+import { auditLog } from '../middleware/auditLogMiddleware.js';
 import { validate, idSchema } from '../middleware/validationMiddleware.js';
 import { departmentSchema } from '../validations/departmentValidation.js';
 const router = Router();
 const requireDepartmentsAccess = [requireAuth, requirePermission('departments')];
 router.get('/', listDepartments);
 router.get('/all', ...requireDepartmentsAccess, listAllDepartments);
-router.post('/', ...requireDepartmentsAccess, validate(departmentSchema), createDepartment);
-router.put('/:id', ...requireDepartmentsAccess, validate(idSchema, 'params'), validate(departmentSchema), updateDepartment);
-router.delete('/:id', ...requireDepartmentsAccess, validate(idSchema, 'params'), deleteDepartment);
+router.post('/', ...requireDepartmentsAccess, auditLog('departments'), validate(departmentSchema), createDepartment);
+router.put('/:id', ...requireDepartmentsAccess, auditLog('departments'), validate(idSchema, 'params'), validate(departmentSchema), updateDepartment);
+router.delete('/:id', ...requireDepartmentsAccess, auditLog('departments'), validate(idSchema, 'params'), deleteDepartment);
 export default router;

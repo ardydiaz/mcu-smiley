@@ -44,7 +44,7 @@ export default function DashboardDrilldownModal({ title, filters, onClose }) {
 
         {loading ? <Loading /> : null}
         {error ? <div className="empty-state">{error}</div> : null}
-        {!loading && !error && data?.items?.length ? <FeedbackTable items={data.items} /> : null}
+        {!loading && !error && data?.items?.length ? <FeedbackTable items={data.items} wrapClassName="max-h-[60vh] min-w-0 overflow-y-auto" /> : null}
         {!loading && !error && !data?.items?.length ? <div className="empty-state">No matching responses.</div> : null}
 
         <div className="pagination-bar">

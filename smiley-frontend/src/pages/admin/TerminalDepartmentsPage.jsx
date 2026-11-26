@@ -10,6 +10,8 @@ import { terminalDepartmentService } from '../../services/terminalDepartmentServ
 import { terminalService } from '../../services/terminalService.js';
 import { useApi } from '../../hooks/useApi.js';
 import { useDataTable } from '../../hooks/useDataTable.js';
+import { StatusBadge, TABLE, TABLE_WRAP, TD, TH, TR } from '../../components/admin/tableStyles.jsx';
+import { ACTIONS, CHIP, CHIP_LIST, FORM, HINT, INPUT, LABEL } from '../../components/admin/formStyles.jsx';
 
 export default function TerminalDepartmentsPage() {
   const { data: assignments, loading, error, reload } = useApi(() => terminalDepartmentService.list(), []);
@@ -231,25 +233,26 @@ export default function TerminalDepartmentsPage() {
         {error ? <div className="empty-state">{error}</div> : null}
         <DataTableToolbar table={table} searchPlaceholder="Search terminal assignments..." />
         <DataTableSummary table={table} itemLabel="terminal assignments" />
-        <div className="table-wrap">
-          <table>
+        <div className={TABLE_WRAP}>
+          <table className={`${TABLE} min-w-[760px]`}>
             <thead>
               <tr>
-                <th>Terminal</th>
-                <th>Assigned Departments</th>
-                <th>Terminal Status</th>
-                <th>Action</th>
+                <th className={TH}>Terminal</th>
+                <th className={TH}>Assigned Departments</th>
+                <th className={TH}>Terminal Status</th>
+                <th className={TH}>Action</th>
               </tr>
             </thead>
             <tbody>
               {table.pageItems.map(group => (
-                <tr key={group.terminal_id}>
-                  <td>
-                    <strong>{group.terminal_code}</strong>
-                    <br />
-                    <span>{group.terminal_name}</span>
+                <tr key={group.terminal_id} className={TR}>
+                  <td className={TD}>
+                    <div className="grid gap-0.5">
+                      <span className="font-normal text-[#21112c]">{group.terminal_code}</span>
+                      <span className="text-sm text-[#63707c]">{group.terminal_name}</span>
+                    </div>
                   </td>
-                  <td>
+                  <td className={TD}>
                     <div className="assigned-department-list">
                       {group.departments.map(department => (
                         <button
@@ -266,8 +269,8 @@ export default function TerminalDepartmentsPage() {
                       ))}
                     </div>
                   </td>
-                  <td>{group.terminal_status}</td>
-                  <td>
+                  <td className={TD}><StatusBadge status={group.terminal_status} /></td>
+                  <td className={TD}>
                     <Button variant="secondary" icon={Edit2} iconOnly aria-label="Edit terminal departments" onClick={() => openEditModal(group)}>Edit</Button>
                   </td>
                 </tr>
@@ -281,11 +284,12 @@ export default function TerminalDepartmentsPage() {
 
       {assignOpen ? (
         <Modal title="Assign Departments" onClose={closeAssignModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form" onSubmit={handleSubmit}>
-            <div className="field">
-              <label htmlFor="terminalId">Terminal</label>
+          <form className={FORM} onSubmit={handleSubmit}>
+            <div className="grid gap-1.5">
+              <label htmlFor="terminalId" className={LABEL}>Terminal</label>
               <select
                 id="terminalId"
+                className={INPUT}
                 value={terminalId}
                 onChange={handleTerminalChange}
                 disabled={terminalsLoading || !terminalOptions.length}
@@ -299,15 +303,16 @@ export default function TerminalDepartmentsPage() {
                 ))}
               </select>
               {!terminalsLoading && !terminalOptions.length ? (
-                <p className="field-hint">No active terminals yet. Create one in Management - Terminals first.</p>
+                <p className={HINT}>No active terminals yet. Create one in Management - Terminals first.</p>
               ) : null}
-              {terminalsError ? <p className="field-hint">{terminalsError}</p> : null}
+              {terminalsError ? <p className={HINT}>{terminalsError}</p> : null}
             </div>
 
-            <div className="field">
-              <label htmlFor="departmentId">Departments</label>
+            <div className="grid gap-1.5">
+              <label htmlFor="departmentId" className={LABEL}>Departments</label>
               <select
                 id="departmentId"
+                className={INPUT}
                 value=""
                 onChange={event => addDepartment(event.target.value)}
                 disabled={!terminalId || departmentsLoading || !availableDepartments.length}
@@ -319,23 +324,23 @@ export default function TerminalDepartmentsPage() {
                   <option key={department.id} value={department.id}>{department.name}</option>
                 ))}
               </select>
-              {!terminalId ? <p className="field-hint">Select a terminal first.</p> : null}
+              {!terminalId ? <p className={HINT}>Select a terminal first.</p> : null}
               {terminalId && !departmentsLoading && !availableDepartments.length && departmentOptions.length ? (
-                <p className="field-hint">All active departments are already selected or assigned to this terminal.</p>
+                <p className={HINT}>All active departments are already selected or assigned to this terminal.</p>
               ) : null}
               {!departmentsLoading && !departmentOptions.length ? (
-                <p className="field-hint">No active departments yet. Create one in Management - Departments first.</p>
+                <p className={HINT}>No active departments yet. Create one in Management - Departments first.</p>
               ) : null}
               {editTerminalId && !departmentsLoading && !editAvailableDepartments.length && departmentOptions.length ? (
-                <p className="field-hint">All active departments are already selected or assigned to this terminal.</p>
+                <p className={HINT}>All active departments are already selected or assigned to this terminal.</p>
               ) : null}
-              {departmentsError ? <p className="field-hint">{departmentsError}</p> : null}
+              {departmentsError ? <p className={HINT}>{departmentsError}</p> : null}
               {selectedDepartments.length ? (
-                <div className="selected-chip-list" aria-label="Selected departments">
+                <div className={CHIP_LIST} aria-label="Selected departments">
                   {selectedDepartments.map(department => (
                     <button
                       key={department.id}
-                      className="selected-chip"
+                      className={CHIP}
                       type="button"
                       onClick={() => removeSelectedDepartment(String(department.id))}
                       aria-label={'Remove ' + department.name}
@@ -347,13 +352,13 @@ export default function TerminalDepartmentsPage() {
                 </div>
               ) : null}
               {selectedTerminalAssignments.length ? (
-                <p className="field-hint">
+                <p className={HINT}>
                   Already assigned: {selectedTerminalAssignments.map(assignment => assignment.department_name).join(', ')}
                 </p>
               ) : null}
             </div>
 
-            <div className="button-row rating-option-modal-actions">
+            <div className={ACTIONS}>
               <Button type="submit" icon={Link2} disabled={!canSubmit}>{saving ? 'Saving' : 'Assign Departments'}</Button>
               <Button type="button" variant="secondary" icon={X} onClick={closeAssignModal}>Cancel</Button>
             </div>
@@ -363,11 +368,12 @@ export default function TerminalDepartmentsPage() {
 
       {editGroup ? (
         <Modal title="Edit Terminal Departments" onClose={closeEditModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form" onSubmit={handleEditSubmit}>
-            <div className="field">
-              <label htmlFor="editTerminalId">Terminal</label>
+          <form className={FORM} onSubmit={handleEditSubmit}>
+            <div className="grid gap-1.5">
+              <label htmlFor="editTerminalId" className={LABEL}>Terminal</label>
               <select
                 id="editTerminalId"
+                className={INPUT}
                 value={editTerminalId}
                 onChange={event => setEditTerminalId(event.target.value)}
                 disabled={terminalsLoading || !terminalOptions.length}
@@ -381,15 +387,16 @@ export default function TerminalDepartmentsPage() {
                 ))}
               </select>
               {!terminalsLoading && !terminalOptions.length ? (
-                <p className="field-hint">No active terminals yet. Create one in Management - Terminals first.</p>
+                <p className={HINT}>No active terminals yet. Create one in Management - Terminals first.</p>
               ) : null}
-              {terminalsError ? <p className="field-hint">{terminalsError}</p> : null}
+              {terminalsError ? <p className={HINT}>{terminalsError}</p> : null}
             </div>
 
-            <div className="field">
-              <label htmlFor="editDepartmentId">Departments</label>
+            <div className="grid gap-1.5">
+              <label htmlFor="editDepartmentId" className={LABEL}>Departments</label>
               <select
                 id="editDepartmentId"
+                className={INPUT}
                 value=""
                 onChange={event => addEditDepartment(event.target.value)}
                 disabled={departmentsLoading || !editAvailableDepartments.length}
@@ -402,15 +409,15 @@ export default function TerminalDepartmentsPage() {
                 ))}
               </select>
               {!departmentsLoading && !departmentOptions.length ? (
-                <p className="field-hint">No active departments yet. Create one in Management - Departments first.</p>
+                <p className={HINT}>No active departments yet. Create one in Management - Departments first.</p>
               ) : null}
-              {departmentsError ? <p className="field-hint">{departmentsError}</p> : null}
+              {departmentsError ? <p className={HINT}>{departmentsError}</p> : null}
               {editSelectedDepartments.length ? (
-                <div className="selected-chip-list" aria-label="Selected departments">
+                <div className={CHIP_LIST} aria-label="Selected departments">
                   {editSelectedDepartments.map(department => (
                     <button
                       key={department.id}
-                      className="selected-chip"
+                      className={CHIP}
                       type="button"
                       onClick={() => removeEditDepartment(String(department.id))}
                       aria-label={'Remove ' + department.name}
@@ -421,11 +428,11 @@ export default function TerminalDepartmentsPage() {
                   ))}
                 </div>
               ) : (
-                <p className="field-hint">No departments selected. Saving will remove all assignments for this terminal.</p>
+                <p className={HINT}>No departments selected. Saving will remove all assignments for this terminal.</p>
               )}
             </div>
 
-            <div className="button-row rating-option-modal-actions">
+            <div className={ACTIONS}>
               <Button type="submit" icon={Save} disabled={!canSaveEdit}>{editSaving ? 'Saving' : 'Save Changes'}</Button>
               <Button type="button" variant="secondary" icon={X} onClick={closeEditModal}>Cancel</Button>
             </div>

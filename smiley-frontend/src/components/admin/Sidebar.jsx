@@ -1,4 +1,4 @@
-import { BarChart3, Building2, ChevronDown, FileText, Link2, MapPin, Monitor, Settings2, Smile, Star, Users } from 'lucide-react';
+import { BarChart3, Building2, ChevronDown, FileText, History, Link2, MapPin, Monitor, Settings2, Smile, Star, Users } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import { canAccessMenu } from '../../utils/menuPermissions.js';
@@ -8,6 +8,7 @@ const links = [
   { to: '/admin/ratings', label: 'Ratings', icon: Star, permission: 'ratings' },
   { to: '/admin/feedback', label: 'Feedback', icon: Smile, permission: 'feedback' },
   { to: '/admin/reports', label: 'Reports', icon: FileText, permission: 'reports' },
+  { to: '/admin/audit-logs', label: 'Audit Logs', icon: History, permission: 'audit-logs' },
 ];
 
 const managementLinks = [

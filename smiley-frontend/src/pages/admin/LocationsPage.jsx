@@ -8,6 +8,8 @@ import Toast from '../../components/common/Toast.jsx';
 import { useApi } from '../../hooks/useApi.js';
 import { useDataTable } from '../../hooks/useDataTable.js';
 import { locationService } from '../../services/locationService.js';
+import { StatusBadge, TABLE, TABLE_WRAP, TD, TH, TR } from '../../components/admin/tableStyles.jsx';
+import { ACTIONS, ERROR_TEXT, FORM, INPUT, LABEL, REQUIRED_MARK, labelClass, inputClass } from '../../components/admin/formStyles.jsx';
 
 const emptyForm = { name: '', description: '', status: 'active' };
 
@@ -152,26 +154,26 @@ export default function LocationsPage() {
         {error ? <div className="empty-state">{error}</div> : null}
         <DataTableToolbar table={table} searchPlaceholder="Search locations..." />
         <DataTableSummary table={table} itemLabel="locations" />
-        <div className="table-wrap">
-          <table>
+        <div className={TABLE_WRAP}>
+          <table className={TABLE}>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th className={TH}>ID</th>
+                <th className={TH}>Name</th>
+                <th className={TH}>Description</th>
+                <th className={TH}>Status</th>
+                <th className={TH}>Action</th>
               </tr>
             </thead>
             <tbody>
               {table.pageItems.map(location => (
-                <tr key={location.id}>
-                  <td>{location.id}</td>
-                  <td>{location.name}</td>
-                  <td>{location.description}</td>
-                  <td>{location.status}</td>
-                  <td>
-                    <div className="button-row table-action-row">
+                <tr key={location.id} className={TR}>
+                  <td className={TD}>{location.id}</td>
+                  <td className={TD}>{location.name}</td>
+                  <td className={TD}>{location.description}</td>
+                  <td className={TD}><StatusBadge status={location.status} /></td>
+                  <td className={TD}>
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" icon={Edit2} iconOnly aria-label="Edit location" onClick={() => startEdit(location)}>Edit</Button>
                       {location.status === 'inactive' ? (
                         <Button variant="primary" icon={CheckCircle} iconOnly aria-label="Activate location" onClick={() => setLocationStatus(location, 'active')}>Activate</Button>
@@ -191,11 +193,12 @@ export default function LocationsPage() {
 
       {addOpen ? (
         <Modal title="Add Location" onClose={closeAddModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form" onSubmit={handleSubmit} noValidate>
-            <div className={'field' + (fieldErrors.name ? ' field-error' : '')}>
-              <label htmlFor="locationName">Location name <span className="required-mark" aria-hidden="true">*</span></label>
+          <form className={FORM} onSubmit={handleSubmit} noValidate>
+            <div className="grid gap-1.5">
+              <label htmlFor="locationName" className={labelClass(fieldErrors.name)}>Location name <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="locationName"
+                className={inputClass(fieldErrors.name)}
                 value={form.name}
                 onChange={event => updateForm('name', event.target.value)}
                 placeholder="Student Center"
@@ -203,21 +206,22 @@ export default function LocationsPage() {
                 aria-describedby={fieldErrors.name ? 'location-name-error' : undefined}
                 autoFocus
               />
-              {fieldErrors.name ? <p id="location-name-error" className="field-error-text">{fieldErrors.name}</p> : null}
+              {fieldErrors.name ? <p id="location-name-error" className={ERROR_TEXT}>{fieldErrors.name}</p> : null}
             </div>
-            <div className={'field' + (fieldErrors.description ? ' field-error' : '')}>
-              <label htmlFor="locationDescription">Description <span className="required-mark" aria-hidden="true">*</span></label>
+            <div className="grid gap-1.5">
+              <label htmlFor="locationDescription" className={labelClass(fieldErrors.description)}>Description <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="locationDescription"
+                className={inputClass(fieldErrors.description)}
                 value={form.description}
                 onChange={event => updateForm('description', event.target.value)}
                 placeholder="Main kiosk area"
                 aria-invalid={fieldErrors.description ? 'true' : 'false'}
                 aria-describedby={fieldErrors.description ? 'location-description-error' : undefined}
               />
-              {fieldErrors.description ? <p id="location-description-error" className="field-error-text">{fieldErrors.description}</p> : null}
+              {fieldErrors.description ? <p id="location-description-error" className={ERROR_TEXT}>{fieldErrors.description}</p> : null}
             </div>
-            <div className="button-row rating-option-modal-actions">
+            <div className={ACTIONS}>
               <Button type="submit" icon={Plus} disabled={saving}>{saving ? 'Saving' : 'Add Location'}</Button>
               <Button type="button" variant="secondary" icon={X} onClick={closeAddModal}>Cancel</Button>
             </div>
@@ -227,36 +231,38 @@ export default function LocationsPage() {
 
       {editId ? (
         <Modal title="Edit Location" onClose={closeEditModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form" onSubmit={handleEditSubmit} noValidate>
-            <div className={'field' + (editFieldErrors.name ? ' field-error' : '')}>
-              <label htmlFor="editLocationName">Location name <span className="required-mark" aria-hidden="true">*</span></label>
+          <form className={FORM} onSubmit={handleEditSubmit} noValidate>
+            <div className="grid gap-1.5">
+              <label htmlFor="editLocationName" className={labelClass(editFieldErrors.name)}>Location name <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="editLocationName"
+                className={inputClass(editFieldErrors.name)}
                 value={editForm.name}
                 onChange={event => updateEditForm('name', event.target.value)}
                 aria-invalid={editFieldErrors.name ? 'true' : 'false'}
                 autoFocus
               />
-              {editFieldErrors.name ? <p className="field-error-text">{editFieldErrors.name}</p> : null}
+              {editFieldErrors.name ? <p className={ERROR_TEXT}>{editFieldErrors.name}</p> : null}
             </div>
-            <div className={'field' + (editFieldErrors.description ? ' field-error' : '')}>
-              <label htmlFor="editLocationDescription">Description <span className="required-mark" aria-hidden="true">*</span></label>
+            <div className="grid gap-1.5">
+              <label htmlFor="editLocationDescription" className={labelClass(editFieldErrors.description)}>Description <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="editLocationDescription"
+                className={inputClass(editFieldErrors.description)}
                 value={editForm.description}
                 onChange={event => updateEditForm('description', event.target.value)}
                 aria-invalid={editFieldErrors.description ? 'true' : 'false'}
               />
-              {editFieldErrors.description ? <p className="field-error-text">{editFieldErrors.description}</p> : null}
+              {editFieldErrors.description ? <p className={ERROR_TEXT}>{editFieldErrors.description}</p> : null}
             </div>
-            <div className="field">
-              <label htmlFor="editLocationStatus">Status</label>
-              <select id="editLocationStatus" value={editForm.status} onChange={event => updateEditForm('status', event.target.value)}>
+            <div className="grid gap-1.5">
+              <label htmlFor="editLocationStatus" className={LABEL}>Status</label>
+              <select id="editLocationStatus" className={INPUT} value={editForm.status} onChange={event => updateEditForm('status', event.target.value)}>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
-            <div className="button-row rating-option-modal-actions">
+            <div className={ACTIONS}>
               <Button type="submit" icon={Save} disabled={editSaving}>{editSaving ? 'Saving' : 'Save Changes'}</Button>
               <Button type="button" variant="secondary" icon={X} onClick={closeEditModal}>Cancel</Button>
             </div>

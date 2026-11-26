@@ -4,6 +4,7 @@ import KioskLayout from '../layouts/KioskLayout.jsx';
 import LoginPage from '../pages/auth/LoginPage.jsx';
 import SsoCallbackPage from '../pages/auth/SsoCallbackPage.jsx';
 import AdminUsersPage from '../pages/admin/AdminUsersPage.jsx';
+import AuditLogsPage from '../pages/admin/AuditLogsPage.jsx';
 import DashboardPage from '../pages/admin/DashboardPage.jsx';
 import DepartmentsPage from '../pages/admin/DepartmentsPage.jsx';
 import FeedbackAdminPage from '../pages/admin/FeedbackPage.jsx';
@@ -64,6 +65,7 @@ export default function AppRoutes() {
           <Route path="terminal-departments" element={<PermissionRoute permission="terminal-departments"><TerminalDepartmentsPage /></PermissionRoute>} />
           <Route path="feedback" element={<PermissionRoute permission="feedback"><FeedbackAdminPage /></PermissionRoute>} />
           <Route path="reports" element={<PermissionRoute permission="reports"><ReportsPage /></PermissionRoute>} />
+          <Route path="audit-logs" element={<PermissionRoute permission="audit-logs"><AuditLogsPage /></PermissionRoute>} />
           <Route path="no-access" element={<NoAccessPage />} />
         </Route>
       </Route>

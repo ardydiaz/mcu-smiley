@@ -8,6 +8,8 @@ import Toast from '../../components/common/Toast.jsx';
 import { departmentService } from '../../services/departmentService.js';
 import { useApi } from '../../hooks/useApi.js';
 import { useDataTable } from '../../hooks/useDataTable.js';
+import { StatusBadge, TABLE, TABLE_WRAP, TD, TH, TR } from '../../components/admin/tableStyles.jsx';
+import { ACTIONS, ERROR_TEXT, FORM, INPUT, LABEL, REQUIRED_MARK, labelClass, inputClass } from '../../components/admin/formStyles.jsx';
 
 const emptyForm = { name: '', description: '', status: 'active' };
 
@@ -153,24 +155,24 @@ export default function DepartmentsPage() {
       <section className="data-panel">
         <DataTableToolbar table={table} searchPlaceholder="Search departments..." />
         <DataTableSummary table={table} itemLabel="departments" />
-        <div className="table-wrap">
-          <table>
+        <div className={TABLE_WRAP}>
+          <table className={TABLE}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Status</th>
-                <th>Action</th>
+                <th className={TH}>Name</th>
+                <th className={TH}>Description</th>
+                <th className={TH}>Status</th>
+                <th className={TH}>Action</th>
               </tr>
             </thead>
             <tbody>
               {table.pageItems.map(department => (
-                <tr key={department.id}>
-                  <td>{department.name}</td>
-                  <td>{department.description}</td>
-                  <td>{department.status}</td>
-                  <td>
-                    <div className="button-row table-action-row">
+                <tr key={department.id} className={TR}>
+                  <td className={TD}>{department.name}</td>
+                  <td className={TD}>{department.description}</td>
+                  <td className={TD}><StatusBadge status={department.status} /></td>
+                  <td className={TD}>
+                    <div className="flex flex-wrap items-center gap-2">
                       <Button variant="secondary" icon={Edit2} iconOnly aria-label="Edit department" onClick={() => startEdit(department)}>Edit</Button>
                       {department.status === 'inactive' ? (
                         <Button variant="primary" icon={CheckCircle} iconOnly aria-label="Activate department" onClick={() => setDepartmentStatus(department, 'active')}>Activate</Button>
@@ -190,31 +192,33 @@ export default function DepartmentsPage() {
 
       {addOpen ? (
         <Modal title="Add Department" onClose={closeAddModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form AddDep" onSubmit={handleSubmit} noValidate>
-            <div className={'field' + (fieldErrors.name ? ' field-error' : '')}>
-              <label htmlFor="name">Name <span className="required-mark" aria-hidden="true">*</span></label>
+          <form className={FORM} onSubmit={handleSubmit} noValidate>
+            <div className="grid gap-1.5">
+              <label htmlFor="name" className={labelClass(fieldErrors.name)}>Name <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="name"
+                className={inputClass(fieldErrors.name)}
                 value={form.name}
                 onChange={event => updateForm('name', event.target.value)}
                 aria-invalid={fieldErrors.name ? 'true' : 'false'}
                 aria-describedby={fieldErrors.name ? 'name-error' : undefined}
                 autoFocus
               />
-              {fieldErrors.name ? <p id="name-error" className="field-error-text">{fieldErrors.name}</p> : null}
+              {fieldErrors.name ? <p id="name-error" className={ERROR_TEXT}>{fieldErrors.name}</p> : null}
             </div>
-            <div className={'field' + (fieldErrors.description ? ' field-error' : '')}>
-              <label htmlFor="description">Description <span className="required-mark" aria-hidden="true">*</span></label>
+            <div className="grid gap-1.5">
+              <label htmlFor="description" className={labelClass(fieldErrors.description)}>Description <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="description"
+                className={inputClass(fieldErrors.description)}
                 value={form.description}
                 onChange={event => updateForm('description', event.target.value)}
                 aria-invalid={fieldErrors.description ? 'true' : 'false'}
                 aria-describedby={fieldErrors.description ? 'description-error' : undefined}
               />
-              {fieldErrors.description ? <p id="description-error" className="field-error-text">{fieldErrors.description}</p> : null}
+              {fieldErrors.description ? <p id="description-error" className={ERROR_TEXT}>{fieldErrors.description}</p> : null}
             </div>
-            <div className="button-row rating-option-modal-actions">
+            <div className={ACTIONS}>
               <Button type="submit" icon={Plus} disabled={saving}>{saving ? 'Saving' : 'Add Department'}</Button>
               <Button type="button" variant="secondary" icon={X} onClick={closeAddModal}>Cancel</Button>
             </div>
@@ -224,36 +228,38 @@ export default function DepartmentsPage() {
 
       {editId ? (
         <Modal title="Edit Department" onClose={closeEditModal} footer={null}>
-          <form className="rating-option-form rating-option-modal-form" onSubmit={handleEditSubmit} noValidate>
-            <div className={'field' + (editFieldErrors.name ? ' field-error' : '')}>
-              <label htmlFor="editDepartmentName">Name <span className="required-mark" aria-hidden="true">*</span></label>
+          <form className={FORM} onSubmit={handleEditSubmit} noValidate>
+            <div className="grid gap-1.5">
+              <label htmlFor="editDepartmentName" className={labelClass(editFieldErrors.name)}>Name <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="editDepartmentName"
+                className={inputClass(editFieldErrors.name)}
                 value={editForm.name}
                 onChange={event => updateEditForm('name', event.target.value)}
                 aria-invalid={editFieldErrors.name ? 'true' : 'false'}
                 autoFocus
               />
-              {editFieldErrors.name ? <p className="field-error-text">{editFieldErrors.name}</p> : null}
+              {editFieldErrors.name ? <p className={ERROR_TEXT}>{editFieldErrors.name}</p> : null}
             </div>
-            <div className={'field' + (editFieldErrors.description ? ' field-error' : '')}>
-              <label htmlFor="editDepartmentDescription">Description <span className="required-mark" aria-hidden="true">*</span></label>
+            <div className="grid gap-1.5">
+              <label htmlFor="editDepartmentDescription" className={labelClass(editFieldErrors.description)}>Description <span className={REQUIRED_MARK} aria-hidden="true">*</span></label>
               <input
                 id="editDepartmentDescription"
+                className={inputClass(editFieldErrors.description)}
                 value={editForm.description}
                 onChange={event => updateEditForm('description', event.target.value)}
                 aria-invalid={editFieldErrors.description ? 'true' : 'false'}
               />
-              {editFieldErrors.description ? <p className="field-error-text">{editFieldErrors.description}</p> : null}
+              {editFieldErrors.description ? <p className={ERROR_TEXT}>{editFieldErrors.description}</p> : null}
             </div>
-            <div className="field">
-              <label htmlFor="editDepartmentStatus">Status</label>
-              <select id="editDepartmentStatus" value={editForm.status} onChange={event => updateEditForm('status', event.target.value)}>
+            <div className="grid gap-1.5">
+              <label htmlFor="editDepartmentStatus" className={LABEL}>Status</label>
+              <select id="editDepartmentStatus" className={INPUT} value={editForm.status} onChange={event => updateEditForm('status', event.target.value)}>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
             </div>
-            <div className="button-row rating-option-modal-actions">
+            <div className={ACTIONS}>
               <Button type="submit" icon={Save} disabled={editSaving}>{editSaving ? 'Saving' : 'Save Changes'}</Button>
               <Button type="button" variant="secondary" icon={X} onClick={closeEditModal}>Cancel</Button>
             </div>

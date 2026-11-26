@@ -10,20 +10,28 @@ import { useDataTable } from '../../hooks/useDataTable.js';
 import { authService } from '../../services/authService.js';
 import { KIOSK_PERMISSION, menuPermissions } from '../../utils/menuPermissions.js';
 import { formatDateTime } from '../../utils/helpers.js';
+import { BADGE_BASE, MUTED_TEXT, StatusBadge, TABLE, TABLE_WRAP, TD, TH, TR } from '../../components/admin/tableStyles.jsx';
+import { ACTIONS, CARD, CARD_EYEBROW, CHECKBOX_FIELD, CHECKBOX_GRID, ERROR_TEXT, FORM } from '../../components/admin/formStyles.jsx';
 
 const allPermissionDefs = [...menuPermissions, KIOSK_PERMISSION];
 
-function StatusBadge({ status }) {
-  return <span className={'status-badge status-' + status}>{status}</span>;
-}
+const ROLE_BADGE_CLASSES = {
+  admin: 'bg-gradient-to-br from-[#ffb736]/30 to-[#ffd62e]/25 text-[#7a4a00]',
+  user: 'bg-[var(--mcu-purple)]/10 text-[var(--mcu-purple-panther)]',
+};
+
+const PROVIDER_BADGE_CLASSES = {
+  microsoft: 'bg-blue-600/10 text-blue-700',
+  local: 'bg-slate-500/10 text-slate-600',
+};
 
 function RoleBadge({ role }) {
-  return <span className={'role-badge role-badge-' + role}>{role}</span>;
+  return <span className={`${BADGE_BASE} ${ROLE_BADGE_CLASSES[role] || ROLE_BADGE_CLASSES.user}`}>{role}</span>;
 }
 
 function ProviderBadge({ provider }) {
   const value = provider || 'local';
-  return <span className={'provider-badge provider-badge-' + value}>{value}</span>;
+  return <span className={`${BADGE_BASE} ${PROVIDER_BADGE_CLASSES[value] || PROVIDER_BADGE_CLASSES.local}`}>{value}</span>;
 }
 
 function getInitials(name) {
@@ -96,51 +104,62 @@ export default function AdminUsersPage() {
         {error ? <div className="empty-state">{error}</div> : null}
         <DataTableToolbar table={table} searchPlaceholder="Search users..." />
         <DataTableSummary table={table} itemLabel="users" />
-        <div className="table-wrap users-table-wrap">
-          <table className="admin-users-table">
+        <div className={TABLE_WRAP}>
+          <table className={`${TABLE} min-w-[840px]`}>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Provider</th>
-                <th>Role</th>
-                <th>Menus</th>
-                <th>Status</th>
-                <th>Last Login</th>
-                <th>Action</th>
+                <th className={TH}>User</th>
+                <th className={TH}>Provider</th>
+                <th className={TH}>Role</th>
+                <th className={TH}>Menus</th>
+                <th className={TH}>Status</th>
+                <th className={TH}>Last Login</th>
+                <th className={TH}>Action</th>
               </tr>
             </thead>
             <tbody>
               {table.pageItems.map(user => (
-                <tr key={user.id}>
-                  <td>
-                    <div className="user-cell">
-                      <span className="user-avatar" aria-hidden="true">{getInitials(user.name)}</span>
-                      <span className="user-cell-text">
-                        <strong>{user.name}</strong>
-                        <span>{user.email}</span>
+                <tr key={user.id} className={TR}>
+                  <td className={TD}>
+                    <div className="flex min-w-[13rem] items-center gap-3">
+                      <span
+                        aria-hidden="true"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--mcu-purple)] to-[var(--mcu-gold)] text-sm font-normal uppercase text-white shadow-[0_6px_14px_rgba(46,0,70,0.18)]"
+                      >
+                        {getInitials(user.name)}
+                      </span>
+                      <span className="grid min-w-0 gap-0.5">
+                        <span className="truncate text-[0.95rem] font-normal text-[#21112c]">{user.name}</span>
+                        <span className="truncate text-[0.84rem] text-[#63707c]">{user.email}</span>
                       </span>
                     </div>
                   </td>
-                  <td><ProviderBadge provider={user.provider} /></td>
-                  <td><RoleBadge role={user.role} /></td>
-                  <td>
+                  <td className={TD}><ProviderBadge provider={user.provider} /></td>
+                  <td className={TD}><RoleBadge role={user.role} /></td>
+                  <td className={TD}>
                     {user.role === 'admin' ? (
-                      <span className="muted-text">All menus</span>
+                      <span className={MUTED_TEXT}>All menus</span>
                     ) : user.permissions?.length ? (
-                      <div className="permission-chip-list">
+                      <div className="flex flex-wrap gap-1.5">
                         {user.permissions.map(permission => {
                           const label = allPermissionDefs.find(item => item.key === permission)?.label || permission;
-                          return <span key={permission} className="permission-chip">{label}</span>;
+                          return (
+                            <span key={permission} className={`${BADGE_BASE} bg-[var(--mcu-purple)]/10 text-[var(--mcu-purple-panther)]`}>
+                              {label}
+                            </span>
+                          );
                         })}
                       </div>
                     ) : (
-                      <span className="muted-text">No menus</span>
+                      <span className={MUTED_TEXT}>No menus</span>
                     )}
                   </td>
-                  <td><StatusBadge status={user.status} /></td>
-                  <td>{user.last_login_at ? formatDateTime(user.last_login_at) : <span className="muted-text">Never</span>}</td>
-                  <td>
-                    <div className="button-row table-action-row">
+                  <td className={TD}><StatusBadge status={user.status} /></td>
+                  <td className={`${TD} text-sm text-[#21112c]`}>
+                    {user.last_login_at ? formatDateTime(user.last_login_at) : <span className="text-[#63707c]">Never</span>}
+                  </td>
+                  <td className={TD}>
+                    <div className="flex flex-wrap items-center gap-2">
                       {user.status === 'pending' ? (
                         <>
                           <Button icon={ShieldCheck} iconOnly aria-label="Approve as admin" disabled={savingId === user.id} onClick={() => updateAccess(user, 'admin', 'active')}>
@@ -177,15 +196,15 @@ export default function AdminUsersPage() {
 
       {permissionUser ? (
         <Modal title="Select User Menu Access" onClose={() => setPermissionUser(null)} footer={null}>
-          <form className="permission-form" onSubmit={saveUserPermissions}>
-            <div className="permission-user-card">
-              <span>User</span>
-              <strong>{permissionUser.name}</strong>
-              <small>{permissionUser.email}</small>
+          <form className={FORM} onSubmit={saveUserPermissions}>
+            <div className={CARD}>
+              <span className={CARD_EYEBROW}>User</span>
+              <strong className="text-[#21112c]">{permissionUser.name}</strong>
+              <small className="text-sm font-normal text-[#64748b]">{permissionUser.email}</small>
             </div>
-            <div className="permission-grid" role="group" aria-label="Allowed menus">
+            <div className={CHECKBOX_GRID} role="group" aria-label="Allowed menus">
               {menuPermissions.map(permission => (
-                <label key={permission.key} className="checkbox-field permission-checkbox">
+                <label key={permission.key} className={CHECKBOX_FIELD}>
                   <input
                     type="checkbox"
                     checked={selectedPermissions.includes(permission.key)}
@@ -195,8 +214,8 @@ export default function AdminUsersPage() {
                 </label>
               ))}
             </div>
-            <div className="permission-grid" role="group" aria-label="Other access">
-              <label key={KIOSK_PERMISSION.key} className="checkbox-field permission-checkbox">
+            <div className={CHECKBOX_GRID} role="group" aria-label="Other access">
+              <label key={KIOSK_PERMISSION.key} className={CHECKBOX_FIELD}>
                 <input
                   type="checkbox"
                   checked={selectedPermissions.includes(KIOSK_PERMISSION.key)}
@@ -205,8 +224,8 @@ export default function AdminUsersPage() {
                 <span>{KIOSK_PERMISSION.label}</span>
               </label>
             </div>
-            {permissionError ? <p className="field-error-text">{permissionError}</p> : null}
-            <div className="button-row rating-option-modal-actions">
+            {permissionError ? <p className={ERROR_TEXT}>{permissionError}</p> : null}
+            <div className={ACTIONS}>
               <Button type="submit" icon={UserCheck} disabled={savingId === permissionUser.id}>
                 {savingId === permissionUser.id ? 'Saving' : 'Save User Access'}
               </Button>
