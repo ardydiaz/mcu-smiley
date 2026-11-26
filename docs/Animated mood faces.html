@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Animated mood faces</title>
+<style>
+  :root {
+    --bg-a: #3d1157;
+    --bg-b: #551d6e;
+    --card: #ffffff;
+    --card-shadow: rgba(20, 0, 40, 0.35);
+    --ink: #4a3038;
+    --ring: #ffd23f;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg-a: #1f0a2d;
+      --bg-b: #34124a;
+      --card: #2a1d33;
+      --card-shadow: rgba(0, 0, 0, 0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg-a: #1f0a2d;
+    --bg-b: #34124a;
+    --card: #2a1d33;
+    --card-shadow: rgba(0, 0, 0, 0.5);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: linear-gradient(120deg, var(--bg-a), var(--bg-b));
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: grid;
+    place-items: center;
+    padding: 2rem 1rem;
+  }
+
+  .moods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.75rem, 2vw, 1.75rem);
+    width: min(100%, 1360px);
+  }
+  @media (max-width: 720px) {
+    .moods { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  .mood {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--card);
+    border: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    box-shadow: 0 10px 28px var(--card-shadow);
+    transition: transform 0.2s ease;
+  }
+  .mood::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 5px;
+    background: var(--bar);
+  }
+  .mood:hover { transform: translateY(-3px); }
+  .mood:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; }
+  .mood[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--ring), 0 10px 28px var(--card-shadow); }
+
+  .great   { --bar: linear-gradient(90deg, #ffb703, #3ccf6e, #1f8a70); }
+  .good    { --bar: linear-gradient(90deg, #f4c430, #19c2c9, #5a4fcf); }
+  .meh     { --bar: linear-gradient(90deg, #ff9f1c, #ffbf00, #a23b72); }
+  .bad     { --bar: linear-gradient(90deg, #ff9f1c, #ff5e1a, #8e2c6a); }
+
+  .face { width: 46%; height: auto; overflow: visible; filter: drop-shadow(0 8px 10px rgba(120, 60, 0, 0.18)); }
+  .face * { transform-box: fill-box; }
+
+  /* ---------- Shared: blink ---------- */
+  .eyes { transform-origin: center; animation: blink 4s infinite; }
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.08); }
+  }
+
+  /* ---------- 1. Great: laughing bounce ---------- */
+  .great .head { transform-origin: 50% 100%; animation: bounce 1.1s ease-in-out infinite; }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    30% { transform: translateY(-6px) scale(0.98, 1.03); }
+    55% { transform: translateY(0) scale(1.03, 0.97); }
+  }
+  .great .mouth { transform-origin: 50% 0; animation: laugh 0.55s ease-in-out infinite; }
+  @keyframes laugh {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.72); }
+  }
+  .great .lids { animation: squeeze 0.55s ease-in-out infinite; }
+  @keyframes squeeze {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(2px); }
+  }
+
+  /* ---------- 2. Good: blink + growing smile ---------- */
+  .good .head { transform-origin: 50% 90%; animation: sway 3s ease-in-out infinite; }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+  .good .mouth { transform-origin: center; animation: grin 3s ease-in-out infinite; }
+  @keyframes grin {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.18, 1.3); }
+  }
+
+  /* ---------- 3. Meh: side glance, flat mouth shift ---------- */
+  .meh .eyes { animation-duration: 3.2s; }
+  .meh .pupils { animation: glance 4s ease-in-out infinite; }
+  @keyframes glance {
+    0%, 15%, 85%, 100% { transform: translateX(0); }
+    25%, 40% { transform: translateX(-4px); }
+    55%, 70% { transform: translateX(4px); }
+  }
+  .meh .mouth { animation: shift 4s ease-in-out infinite; }
+  @keyframes shift {
+    0%, 15%, 85%, 100% { transform: translateX(0); }
+    25%, 40% { transform: translateX(-3px); }
+    55%, 70% { transform: translateX(3px); }
+  }
+
+  /* ---------- 4. Bad: droop, downcast eyes, wobbling frown ---------- */
+  .bad .head { transform-origin: 50% 100%; animation: droop 3.4s ease-in-out infinite; }
+  @keyframes droop {
+    0%, 100% { transform: translateY(0) scale(1, 1); }
+    50% { transform: translateY(4px) scale(1.03, 0.96); }
+  }
+  .bad .eyes { animation-duration: 5s; }
+  .bad .pupils { animation: down 3.4s ease-in-out infinite; }
+  @keyframes down {
+    0%, 100% { transform: translate(0, 1px); }
+    50% { transform: translate(0, 4px); }
+  }
+  .bad .mouth { transform-origin: center; animation: wobble 1.7s ease-in-out infinite; }
+  @keyframes wobble {
+    0%, 100% { transform: scaleY(1) translateY(0); }
+    50% { transform: scaleY(1.35) translateY(1px); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .face *, .mood { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Shared gradients for the faces -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <radialGradient id="skin" cx="0.68" cy="0.22" r="0.95">
+      <stop offset="0" stop-color="#ffe680"/>
+      <stop offset="0.45" stop-color="#ffbe3d"/>
+      <stop offset="1" stop-color="#f08a2c"/>
+    </radialGradient>
+    <linearGradient id="blush" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.78" stop-color="#ff7ab6" stop-opacity="0"/>
+      <stop offset="1" stop-color="#ff6fb0" stop-opacity="0.85"/>
+    </linearGradient>
+    <linearGradient id="mouthFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c2128c"/>
+      <stop offset="1" stop-color="#e83aa8"/>
+    </linearGradient>
+    <symbol id="body" viewBox="0 0 120 120">
+      <rect x="8" y="8" width="104" height="104" rx="48" fill="url(#skin)"/>
+      <rect x="8" y="8" width="104" height="104" rx="48" fill="url(#blush)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="moods" role="radiogroup" aria-label="How are you feeling?">
+
+  <!-- 1. Great -->
+  <button class="mood great" aria-pressed="false" aria-label="Great">
+    <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
+      <g class="head">
+        <use href="#body" width="120" height="120"/>
+        <g class="lids" fill="none" stroke="var(--ink)" stroke-width="5.5" stroke-linecap="round">
+          <path d="M31 46 q9 -11 18 0"/>
+          <path d="M71 46 q9 -11 18 0"/>
+        </g>
+        <g class="mouth">
+          <path d="M28 62 h64 q0 34 -32 34 q-32 0 -32 -34z" fill="url(#mouthFill)"/>
+          <path d="M30 62 h60 v4 q0 3 -3 3 h-54 q-3 0 -3 -3z" fill="#fff"/>
+        </g>
+      </g>
+    </svg>
+  </button>
+
+  <!-- 2. Good -->
+  <button class="mood good" aria-pressed="false" aria-label="Good">
+    <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
+      <g class="head">
+        <use href="#body" width="120" height="120"/>
+        <g class="eyes">
+          <circle cx="41" cy="46" r="13" fill="#fff"/>
+          <circle cx="79" cy="46" r="13" fill="#fff"/>
+          <g class="pupils" fill="var(--ink)">
+            <circle cx="43" cy="47" r="6"/>
+            <circle cx="81" cy="47" r="6"/>
+          </g>
+        </g>
+        <path class="mouth" d="M44 76 q16 14 32 0" fill="none" stroke="var(--ink)" stroke-width="5.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </button>
+
+  <!-- 3. Meh -->
+  <button class="mood meh" aria-pressed="false" aria-label="Okay">
+    <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
+      <g class="head">
+        <use href="#body" width="120" height="120"/>
+        <g class="eyes">
+          <circle cx="41" cy="44" r="13" fill="#fff"/>
+          <circle cx="79" cy="44" r="13" fill="#fff"/>
+          <g class="pupils" fill="var(--ink)">
+            <circle cx="41" cy="45" r="6"/>
+            <circle cx="79" cy="45" r="6"/>
+          </g>
+        </g>
+        <path class="mouth" d="M46 82 h28" fill="none" stroke="var(--ink)" stroke-width="5.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </button>
+
+  <!-- 4. Bad -->
+  <button class="mood bad" aria-pressed="false" aria-label="Bad">
+    <svg class="face" viewBox="0 0 120 120" aria-hidden="true">
+      <g class="head">
+        <use href="#body" width="120" height="120"/>
+        <g class="eyes">
+          <circle cx="41" cy="48" r="13" fill="#fff"/>
+          <circle cx="79" cy="48" r="13" fill="#fff"/>
+          <g class="pupils" fill="var(--ink)">
+            <circle cx="39" cy="49" r="6"/>
+            <circle cx="77" cy="49" r="6"/>
+          </g>
+        </g>
+        <path class="mouth" d="M45 88 q15 -13 30 0" fill="none" stroke="var(--ink)" stroke-width="5.5" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </button>
+
+</div>
+
+<script>
+  // Simple single-select behaviour so the cards work as a rating picker
+  const cards = document.querySelectorAll('.mood');
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.setAttribute('aria-pressed', c === card ? 'true' : 'false'));
+    });
+  });
+</script>
+</body>
+</html>

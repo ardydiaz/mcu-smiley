@@ -1,3 +1,5 @@
+import MoodFace from './MoodFace.jsx';
+
 export default function SmileyButton({ rating, onSelect }) {
   const motion = rating.score >= 4 ? 'happy' : rating.score === 3 ? 'neutral' : 'sad';
   const tone = {
@@ -23,7 +25,9 @@ export default function SmileyButton({ rating, onSelect }) {
       aria-label={rating.label}
       onClick={() => onSelect(rating)}
     >
-      <span className="smiley-emoji">{rating.emoji}</span>
+      <span className="smiley-emoji">
+        <MoodFace score={rating.score} />
+      </span>
       {/* <span className="smiley-label">{rating.label}</span> */}
     </button>
   );

@@ -1,12 +1,37 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError } from '../services/api.js';
 import { terminalService } from '../services/terminalService.js';
 import { clearKioskTerminal, getKioskDeviceId, getKioskTerminal } from '../utils/storage.js';
 
+const ROUTE_TRANSITION_MS = 550;
+
+function KioskRouteLoader({ active }) {
+  return (
+    <div className={'kiosk-route-loader' + (active ? ' active' : '')} aria-hidden={!active}>
+      <span className="kiosk-route-loader-spinner" aria-hidden="true" />
+      <p className="kiosk-route-loader-text">Please wait&hellip;</p>
+    </div>
+  );
+}
+
 export default function KioskLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [transitioning, setTransitioning] = useState(false);
+  const isFirstRender = useRef(true);
+
+  // useLayoutEffect (not useEffect) so the loader is painted opaque in the same frame the
+  // new route's content mounts - otherwise the destination page could flash briefly first.
+  useLayoutEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return undefined;
+    }
+    setTransitioning(true);
+    const timeout = window.setTimeout(() => setTransitioning(false), ROUTE_TRANSITION_MS);
+    return () => window.clearTimeout(timeout);
+  }, [location.pathname]);
 
   useEffect(() => {
     const terminal = getKioskTerminal();
@@ -37,6 +62,7 @@ export default function KioskLayout() {
       <main className="kiosk-main">
         <Outlet />
       </main>
+      <KioskRouteLoader active={transitioning} />
     </div>
   );
 }

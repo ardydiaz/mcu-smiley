@@ -218,11 +218,11 @@ export default function TerminalsPage() {
                   <td className={TD}>
                     {terminal.reserved_by_device_id ? (
                       <div className="grid gap-0.5">
-                        <StatusBadge status="pending" />
+                        <StatusBadge status="active" />
                         <span className={MUTED_TEXT}>Last seen {formatDateTime(terminal.reserved_last_seen_at)}</span>
                       </div>
                     ) : (
-                      <StatusBadge status="active" />
+                      <StatusBadge status="pending" />
                     )}
                   </td>
                   <td className={TD}>
