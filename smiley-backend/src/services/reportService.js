@@ -1,4 +1,20 @@
 import { Vote } from '../models/Vote.js';
+import { env } from '../config/env.js';
+
+function formatCsvDate(value) {
+  if (!value) return '';
+  const date = value instanceof Date ? value : new Date(value);
+  return date.toLocaleString('en-US', {
+    timeZone: env.TEAMS_DIGEST_TIMEZONE,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  });
+}
 
 export function csvCell(value) {
   let text = value == null ? '' : String(value);
@@ -21,7 +37,7 @@ export async function getReportExport(filters) {
 }
 
 export function toCsv(items) {
-  const rows = [['ID', 'Date (UTC)', 'Rating', 'Score', 'User Type', 'Department', 'Location', 'Terminal Code', 'Tablet Name', 'Feedback Options', 'Feedback']];
-  for (const row of items) rows.push([row.id, row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at, row.rating, row.score, row.user_type, row.department, row.location, row.terminal_code, row.terminal, row.feedback_options, row.feedback]);
+  const rows = [['Date', 'Rating', 'Score', 'User Type', 'Department', 'Location', 'Terminal Code', 'Tablet Name', 'Feedback Options', 'Feedback']];
+  for (const row of items) rows.push([formatCsvDate(row.created_at), row.rating, row.score, row.user_type, row.department, row.location, row.terminal_code, row.terminal, row.feedback_options, row.feedback]);
   return rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
 }
