@@ -50,6 +50,10 @@ export function streamKioskTerminalEvents(req, res) {
     Connection: 'keep-alive',
     'X-Accel-Buffering': 'no',
   });
+  // Without this, Nagle's algorithm can hold small SSE writes in the TCP send
+  // buffer for several seconds before flushing, so passive listeners (clients
+  // that didn't trigger the change themselves) see a multi-second delay.
+  req.socket.setNoDelay(true);
   res.flushHeaders?.();
 
   const removeClient = addKioskTerminalEventsClient(res);

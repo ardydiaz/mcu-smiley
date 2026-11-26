@@ -1,5 +1,5 @@
 import { CheckCircle, Edit2, Plus, RefreshCw, Save, Trash2, Unplug, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from '../../components/common/Button.jsx';
 import { DataTablePagination, DataTableSummary, DataTableToolbar } from '../../components/admin/DataTableControls.jsx';
 import Loading from '../../components/common/Loading.jsx';
@@ -36,6 +36,17 @@ export default function TerminalsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [message, setMessage] = useState('');
   const locationOptions = locations || [];
+
+  useEffect(() => {
+    const events = new EventSource(terminalService.kioskEventsUrl());
+    const refresh = () => reload().catch(() => {});
+    events.addEventListener('terminal-reservations-changed', refresh);
+    return () => {
+      events.removeEventListener('terminal-reservations-changed', refresh);
+      events.close();
+    };
+  }, [reload]);
+
   const table = useDataTable(
     terminals || [],
     terminal => [
