@@ -9,11 +9,27 @@ import { useApi } from '../../hooks/useApi.js';
 import { useDataTable } from '../../hooks/useDataTable.js';
 import { authService } from '../../services/authService.js';
 import { KIOSK_PERMISSION, menuPermissions } from '../../utils/menuPermissions.js';
+import { formatDateTime } from '../../utils/helpers.js';
 
 const allPermissionDefs = [...menuPermissions, KIOSK_PERMISSION];
 
 function StatusBadge({ status }) {
   return <span className={'status-badge status-' + status}>{status}</span>;
+}
+
+function RoleBadge({ role }) {
+  return <span className={'role-badge role-badge-' + role}>{role}</span>;
+}
+
+function ProviderBadge({ provider }) {
+  const value = provider || 'local';
+  return <span className={'provider-badge provider-badge-' + value}>{value}</span>;
+}
+
+function getInitials(name) {
+  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return '?';
+  return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
 }
 
 export default function AdminUsersPage() {
@@ -80,26 +96,33 @@ export default function AdminUsersPage() {
         {error ? <div className="empty-state">{error}</div> : null}
         <DataTableToolbar table={table} searchPlaceholder="Search users..." />
         <DataTableSummary table={table} itemLabel="users" />
-        <div className="table-wrap">
-          <table>
+        <div className="table-wrap users-table-wrap">
+          <table className="admin-users-table">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Email</th>
+                <th>User</th>
                 <th>Provider</th>
                 <th>Role</th>
                 <th>Menus</th>
                 <th>Status</th>
+                <th>Last Login</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {table.pageItems.map(user => (
                 <tr key={user.id}>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{user.provider || 'local'}</td>
-                  <td>{user.role}</td>
+                  <td>
+                    <div className="user-cell">
+                      <span className="user-avatar" aria-hidden="true">{getInitials(user.name)}</span>
+                      <span className="user-cell-text">
+                        <strong>{user.name}</strong>
+                        <span>{user.email}</span>
+                      </span>
+                    </div>
+                  </td>
+                  <td><ProviderBadge provider={user.provider} /></td>
+                  <td><RoleBadge role={user.role} /></td>
                   <td>
                     {user.role === 'admin' ? (
                       <span className="muted-text">All menus</span>
@@ -115,28 +138,29 @@ export default function AdminUsersPage() {
                     )}
                   </td>
                   <td><StatusBadge status={user.status} /></td>
+                  <td>{user.last_login_at ? formatDateTime(user.last_login_at) : <span className="muted-text">Never</span>}</td>
                   <td>
                     <div className="button-row table-action-row">
                       {user.status === 'pending' ? (
                         <>
-                          <Button icon={ShieldCheck} disabled={savingId === user.id} onClick={() => updateAccess(user, 'admin', 'active')}>
+                          <Button icon={ShieldCheck} iconOnly aria-label="Approve as admin" disabled={savingId === user.id} onClick={() => updateAccess(user, 'admin', 'active')}>
                             Approve Admin
                           </Button>
-                          <Button variant="secondary" icon={UserCheck} disabled={savingId === user.id} onClick={() => openPermissionModal(user)}>
+                          <Button variant="secondary" icon={UserCheck} iconOnly aria-label="Approve as user" disabled={savingId === user.id} onClick={() => openPermissionModal(user)}>
                             Approve User
                           </Button>
                         </>
                       ) : user.role !== 'admin' ? (
                         <>
-                          <Button variant="secondary" icon={Settings2} disabled={savingId === user.id} onClick={() => openPermissionModal(user)}>
+                          <Button variant="secondary" icon={Settings2} iconOnly aria-label="Edit menu access" disabled={savingId === user.id} onClick={() => openPermissionModal(user)}>
                             Menu Access
                           </Button>
-                          <Button variant="secondary" icon={ShieldCheck} disabled={savingId === user.id} onClick={() => updateAccess(user, 'admin', 'active')}>
+                          <Button variant="secondary" icon={ShieldCheck} iconOnly aria-label="Make admin" disabled={savingId === user.id} onClick={() => updateAccess(user, 'admin', 'active')}>
                             Make Admin
                           </Button>
                         </>
                       ) : (
-                        <Button variant="secondary" icon={UserCheck} disabled={savingId === user.id} onClick={() => openPermissionModal(user)}>
+                        <Button variant="secondary" icon={UserCheck} iconOnly aria-label="Make user" disabled={savingId === user.id} onClick={() => openPermissionModal(user)}>
                           Make User
                         </Button>
                       )}

@@ -15,6 +15,7 @@ function publicUser(user) {
     role: user.role,
     status: user.status,
     provider: user.provider,
+    last_login_at: user.last_login_at,
     permissions: normalizePermissions(user.role, user.permissions || []),
   };
 }

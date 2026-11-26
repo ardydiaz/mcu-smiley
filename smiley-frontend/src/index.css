@@ -1561,6 +1561,121 @@ th {
   white-space: nowrap;
 }
 
+.users-table-wrap {
+  border: 1px solid #e0e8ee;
+  border-radius: 16px;
+  overflow: hidden auto;
+  box-shadow: 0 14px 34px rgba(23, 32, 42, 0.05);
+}
+
+.users-table-wrap table {
+  min-width: 820px;
+}
+
+.users-table-wrap th {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.admin-users-table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.admin-users-table tbody tr:hover td {
+  background: #f8fbfa;
+}
+
+.admin-users-table th,
+.admin-users-table td {
+  vertical-align: middle;
+}
+
+.admin-users-table strong,
+.admin-users-table .role-badge,
+.admin-users-table .provider-badge,
+.admin-users-table .status-badge,
+.admin-users-table .permission-chip {
+  font-weight: 500;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 13rem;
+}
+
+.user-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, var(--mcu-purple), var(--mcu-gold));
+  box-shadow: 0 6px 14px rgba(46, 0, 70, 0.18);
+}
+
+.user-cell-text {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.user-cell-text strong {
+  color: #21112c;
+  font-size: 0.96rem;
+}
+
+.user-cell-text span {
+  color: #63707c;
+  font-size: 0.84rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-badge,
+.provider-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.role-badge-admin {
+  background: linear-gradient(135deg, rgba(255, 183, 54, 0.3), rgba(255, 214, 46, 0.26));
+  color: #7a4a00;
+}
+
+.role-badge-user {
+  background: rgba(92, 41, 124, 0.1);
+  color: var(--mcu-purple-panther);
+}
+
+.provider-badge-microsoft {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+}
+
+.provider-badge-local {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+}
+
+.admin-users-table .status-active {
+  background: #dcfce7;
+  color: #166534;
+}
+
 
 .feedback-modal-content {
   display: grid;
